@@ -8,10 +8,8 @@ from collections import deque
 def request_news(category, num_entries, mhyuuid):
     headers = {
         'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US',
-        'Origin': 'https://www.hoyolab.com',
-        'Referer': 'https://www.hoyolab.com/genshin/home/3',
-        'x-rpc-language': 'en-us'
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Origin': 'https://www.hoyolab.com'
     }
 
     params = {
@@ -42,9 +40,8 @@ def request_news(category, num_entries, mhyuuid):
 def request_post(post_id, mhyuuid):
     headers = {
         'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US',
-        'Origin': 'https://www.hoyolab.com',
-        'x-rpc-language': 'en-us'
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Origin': 'https://www.hoyolab.com'
     }
 
     params = {
@@ -78,7 +75,7 @@ def create_feed_item(post):
 
     item = {
         'id': post_id,
-        'url': 'https://www.hoyolab.com/genshin/article/{}'.format(post_id),
+        'url': 'https://www.hoyolab.com/article/{}'.format(post_id),
         'title': post['post']['subject'],
         'content_html': post['post']['content'],
         'date_published': ct
@@ -95,7 +92,7 @@ def create_feed_file(path, url, icon, items):
     feed = {
         'version': 'https://jsonfeed.org/version/1.1',
         'title': 'Hoyolab News',
-        'home_page_url': 'https://www.hoyolab.com/genshin/home/3',
+        'home_page_url': 'https://www.hoyolab.com/',
         'feed_url': url,
         'icon': icon,
         'language': 'en',
@@ -109,12 +106,14 @@ def create_feed_file(path, url, icon, items):
         print('[create_feed_file] Could not write json file to {}!'.format(path))
 
 
-def load_feed_items(path, num_entries):
+def load_feed_items(path):
+    # limit returned items from file
+    max_items = 50
+
     try:
         with open(path, 'r') as fd:
             feed = json.load(fd)
-        # limit returned feed items
-        return feed['items'][:num_entries*3*5]
+        return feed['items'][:max_items]
     except IOError:
         # file not found -> create new feed list
         return []
@@ -143,7 +142,7 @@ def main():
         print('Error at loading environment variables!')
         return
 
-    num_entries = 5
+    num_entries = 10
 
     feed_items = load_feed_items(feed_path, num_entries)
     known_ids = collect_known_ids(feed_items)
