@@ -144,7 +144,7 @@ def main():
 
     num_entries = 10
 
-    feed_items = load_feed_items(feed_path, num_entries)
+    feed_items = load_feed_items(feed_path)
     known_ids = collect_known_ids(feed_items)
 
     # create list of all news items from all 3 categories
