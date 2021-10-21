@@ -2,7 +2,6 @@ import requests
 import json
 from os import environ
 from datetime import datetime
-from collections import deque
 
 
 def request_news(category, num_entries, mhyuuid):
@@ -153,10 +152,10 @@ def main():
         cat_news = request_news(cat, num_entries, mhyuuid)
 
         if cat_news is None:
+            print('Error at news request!')
             return
 
         all_posts.extend(cat_news)
-
 
     fetched_ids = {p['post']['post_id']: p['last_modify_time'] for p in all_posts}
 
@@ -168,17 +167,22 @@ def main():
 
     # remove modified items and create feed as deque
     if len(new_ids) > 0:
-        feed_items = deque(filter(lambda x: x['id'] not in new_ids, feed_items))
+        feed_items = list(filter(lambda x: x['id'] not in new_ids, feed_items))
 
-    # prepend items to existing feed
+    # add items to existing feed
     for post_id in new_ids:
         post = request_post(post_id, mhyuuid)
 
         if post is None:
+            print('Error at post request!')
             return
 
         new_item = create_feed_item(post)
-        feed_items.appendleft(new_item)
+        feed_items.append(new_item)
+
+    # sort items if new entries have been added or changed
+    if len(new_ids) > 0:
+        feed_items.sort(key=lambda x: int(x['id']), reverse=True)
 
     create_feed_file(feed_path, feed_url, feed_icon, list(feed_items))
 
