@@ -1,5 +1,7 @@
 # Genshin Impact Hoyolab RSS Feeds
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Testing) ![GitHub](https://img.shields.io/github/license/c3kay/hoyolab-rss-feeds)
+
 This script creates a [JSON Feed](https://jsonfeed.org) and an [Atom Feed](https://validator.w3.org/feed/docs/atom.html)
 from Genshin Impact's official [Hoyolab](https://www.hoyolab.com/) news feed.
 The script is intended to be run periodically from e.g. a cronjob.
