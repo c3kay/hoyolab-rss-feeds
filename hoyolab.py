@@ -1,6 +1,7 @@
 import requests
 import json
 from os import environ
+from os.path import exists
 from datetime import datetime
 from xml.dom import minidom
 
@@ -261,7 +262,8 @@ def main():
         post = request_post(post_id, mhyuuid)
         feed_items.append(create_json_feed_item(post))
 
-    if len(id_diff) > 0:
+    # feed was updated or atom file is missing (possibly due to error)
+    if len(id_diff) > 0 or not exists(atom_feed_path):
         # sort feed items desc. so that latest is at the top
         feed_items.sort(key=lambda x: int(x['id']), reverse=True)
 

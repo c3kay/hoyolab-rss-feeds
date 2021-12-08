@@ -1,7 +1,7 @@
-name: Testing
+name: Test and Deploy
 on: [push]
 jobs:
-  testing:
+  test-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,3 +17,11 @@ jobs:
         run: flake8 --ignore E501 *.py
       - name: Test with pytest
         run: pytest
+      - name: Deploy
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          source: "hoyolab.py"
+          target: "scripts"
