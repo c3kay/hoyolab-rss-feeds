@@ -8,7 +8,7 @@ from xml.dom import minidom
 
 # -- REQUESTS -- #
 
-def request_news(category, num_entries, mhyuuid):
+def request_news(category, num_entries):
     headers = {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.5',
@@ -21,13 +21,8 @@ def request_news(category, num_entries, mhyuuid):
         'type': category
     }
 
-    cookies = {
-        'mi18nLang': 'en-us',
-        '_MHYUUID': mhyuuid
-    }
-
     url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList'
-    res = requests.get(url, headers=headers, params=params, cookies=cookies)
+    res = requests.get(url, headers=headers, params=params)
 
     try:
         res.raise_for_status()
@@ -46,7 +41,7 @@ def request_news(category, num_entries, mhyuuid):
         raise RuntimeError('Unexpected response!') from err
 
 
-def request_post(post_id, mhyuuid):
+def request_post(post_id):
     headers = {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.5',
@@ -59,13 +54,8 @@ def request_post(post_id, mhyuuid):
         'read': 1
     }
 
-    cookies = {
-        'mi18nLang': 'en-us',
-        '_MHYUUID': mhyuuid
-    }
-
     url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getPostFull'
-    res = requests.get(url, headers=headers, params=params, cookies=cookies)
+    res = requests.get(url, headers=headers, params=params)
 
     try:
         res.raise_for_status()
@@ -213,12 +203,12 @@ def get_known_post_ids(feed_items):
     return known_ids
 
 
-def get_latest_post_ids(num_entries, mhyuuid):
+def get_latest_post_ids(num_entries):
     all_posts = []
 
     # collect posts from all 3 news categories
     for cat in range(1, 4):
-        cat_news = request_news(cat, num_entries, mhyuuid)
+        cat_news = request_news(cat, num_entries)
         all_posts.extend(cat_news)
 
     # dict of ids with latest modification timestamp
@@ -241,7 +231,6 @@ def main():
         atom_feed_path = environ['HOYOLAB_ATOM_PATH']
         json_feed_url = environ['HOYOLAB_JSON_URL']
         atom_feed_url = environ['HOYOLAB_ATOM_URL']
-        mhyuuid = environ['HOYOLAB_MHYUUID']
         num_entries = int(environ['HOYOLAB_ENTRIES'])
     except KeyError as err:
         raise RuntimeError('Error at loading feed environment variables!') from err
@@ -250,7 +239,7 @@ def main():
     feed_items = load_json_feed_items(json_feed_path)
 
     known_ids = get_known_post_ids(feed_items)
-    fetched_ids = get_latest_post_ids(num_entries, mhyuuid)
+    fetched_ids = get_latest_post_ids(num_entries)
     id_diff = get_post_id_diff(fetched_ids, known_ids)
 
     # remove modified items from feed item list (if exists)
@@ -259,7 +248,7 @@ def main():
 
     # add diff items to existing feed
     for post_id in id_diff:
-        post = request_post(post_id, mhyuuid)
+        post = request_post(post_id)
         feed_items.append(create_json_feed_item(post))
 
     # feed was updated or atom file is missing (possibly due to error)

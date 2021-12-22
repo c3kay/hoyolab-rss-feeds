@@ -22,6 +22,3 @@ Variable | Description | Example
 `HOYOLAB_JSON_URL` | Public URL of JSON feed | https://example.org/feed.json
 `HOYOLAB_ATOM_URL` | Public URL of Atom feed | https://example.org/feed.xml
 `HOYOLAB_ENTRIES` | Number of entries fetched *per* category | 15
-`HOYOLAB_MHYUUID` | Value of cookie `_MHYUUID` * | 00000000-0000-0000-0000-000000000000
-
-(*) Open hoyolab.com to obtain the cookie

@@ -9,7 +9,6 @@ def init_environ(d):
     environ['HOYOLAB_ATOM_PATH'] = '{}/hoyolab.xml'.format(d)
     environ['HOYOLAB_JSON_URL'] = 'hoyolab.json'
     environ['HOYOLAB_ATOM_URL'] = 'hoyolab.xml'
-    environ['HOYOLAB_MHYUUID'] = '01104c26-7753-49f3-8b10-2619e8e1ea0e'
     environ['HOYOLAB_ENTRIES'] = '1'
 
 
