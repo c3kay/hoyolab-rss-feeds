@@ -18,10 +18,11 @@ jobs:
       - name: Test with pytest
         run: pytest
       - name: Deploy
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          source: "hoyolab.py"
-          target: "scripts"
+        uses: easingthemes/ssh-deploy@main
+        env:
+          REMOTE_HOST: ${{ secrets.HOST }}
+          REMOTE_USER: ${{ secrets.USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          SOURCE: "hoyolab.py"
+          TARGET: "/srv/www/scripts/"
+          ARGS: "-auvz"
