@@ -50,8 +50,7 @@ def request_post(post_id):
 
     params = {
         'gids': 2,
-        'post_id': post_id,
-        'read': 1
+        'post_id': post_id
     }
 
     url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getPostFull'
