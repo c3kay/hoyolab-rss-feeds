@@ -107,18 +107,25 @@ def load_json_feed_items(path):
 def create_json_feed_item(post):
     ct = datetime.fromtimestamp(post['post']['created_at']).astimezone().isoformat()
     post_id = post['post']['post_id']
+    content = post['post']['content']
+
+    if content.startswith(('<p><br></p>', '<p></p>', '<p>&nbsp;</p>')):
+        content = content.partition('</p>')[2]
 
     item = {
         'id': post_id,
         'url': 'https://www.hoyolab.com/article/{}'.format(post_id),
         'title': post['post']['subject'],
-        'content_html': post['post']['content'],
+        'content_html': content,
         'date_published': ct
     }
 
     if post['last_modify_time'] > 0:
         mt = datetime.fromtimestamp(post['last_modify_time']).astimezone().isoformat()
         item['date_modified'] = mt
+
+    if len(post['image_list']) > 0:
+        item['image'] = post['image_list'][0]['url']
 
     return item
 
