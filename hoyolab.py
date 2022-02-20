@@ -81,7 +81,7 @@ def create_json_feed_file(path, feed_url, items):
         'title': 'Genshin Impact News',
         'home_page_url': 'https://www.hoyolab.com/',
         'feed_url': feed_url,
-        'icon': 'https://img-os-static.mihoyo.com/avatar/avatar10011.png',
+        'icon': 'https://img-os-static.hoyolab.com/communityWeb/upload/1d7dd8f33c5ccdfdeac86e1e86ddd652.png',
         'language': 'en',
         'items': items
     }
@@ -144,7 +144,7 @@ def create_atom_feed_file(path, feed_url, items):
     append_text_node(doc, root, 'updated', datetime.now().astimezone().isoformat())
     append_attr_node(doc, root, 'link', {'href': 'https://www.hoyolab.com/', 'rel': 'alternate', 'type': 'text/html'})
     append_attr_node(doc, root, 'link', {'href': feed_url, 'rel': 'self', 'type': 'application/atom+xml'})
-    append_text_node(doc, root, 'icon', 'https://img-os-static.mihoyo.com/avatar/avatar10011.png')
+    append_text_node(doc, root, 'icon', 'https://img-os-static.hoyolab.com/communityWeb/upload/1d7dd8f33c5ccdfdeac86e1e86ddd652.png')
 
     author = doc.createElement('author')
     append_text_node(doc, author, 'name', 'Paimon')
