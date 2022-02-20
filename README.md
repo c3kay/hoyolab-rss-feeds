@@ -23,4 +23,4 @@ Variable | Description | Example
 `HOYOLAB_ATOM_URL` | Public URL of Atom feed | `https://example.org/feed.xml`
 `HOYOLAB_ENTRIES` | Number of entries fetched *per* category | `15`
 
-<sub>*Disclaimer: "Genshin Impact" is a game owned by miHoYo Co., Ltd. The content in the generated feeds are the property of miHoYo Co., Ltd.*</sub>
+<sub>*Disclaimer: The content of the articles in the generated feeds are the property of Cognosphere PTE., LTD. and their respective owners.*</sub>
