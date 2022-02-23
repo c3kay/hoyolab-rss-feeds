@@ -27,6 +27,7 @@ def request_news(category, num_entries):
     try:
         res.raise_for_status()
         j = res.json()
+        res.close()
 
         if j['retcode'] != 0:
             # the message might be in chinese
@@ -59,6 +60,7 @@ def request_post(post_id):
     try:
         res.raise_for_status()
         j = res.json()
+        res.close()
 
         if j['retcode'] != 0:
             # the message might be in chinese
