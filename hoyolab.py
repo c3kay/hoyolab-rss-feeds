@@ -286,8 +286,12 @@ def get_game_id(game_name):
 def main():
     conf_parser = ConfigParser()
     conf_parser.read('feeds.conf')
+    sections = conf_parser.sections()
 
-    for game in conf_parser.sections():
+    if len(sections) == 0:
+        raise RuntimeError('No feeds configured!')
+
+    for game in sections:
         game_id = get_game_id(game)
         conf = conf_parser[game]
 
