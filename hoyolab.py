@@ -2,6 +2,7 @@ import requests
 import json
 from configparser import ConfigParser
 from os.path import exists
+from time import sleep
 from datetime import datetime
 from xml.dom import minidom
 
@@ -268,6 +269,7 @@ def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, t
 
 
 def get_game_id(game_name):
+    # 3 = unused ; 5 = hoyolab internal news
     games = {
         'honkai': 1,
         'genshin': 2,
@@ -300,6 +302,9 @@ def main():
         lang = conf.get('language', 'en-US')
 
         create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries, lang)
+
+        # precaution against rate limits
+        sleep(1)
 
 
 if __name__ == '__main__':
