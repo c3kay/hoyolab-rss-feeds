@@ -298,7 +298,7 @@ def main():
         icon = conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico')
         title = conf.get('title', 'Untitled')
         author = conf.get('author', 'Unknown')
-        num_entries = int(conf.get('num_entries', '5'))
+        num_entries = int(conf.get('entries', '5'))
         lang = conf.get('language', 'en-US')
 
         create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries, lang)
