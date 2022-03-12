@@ -84,7 +84,7 @@ def create_json_feed_file(game_id, path, url, icon, lang, title, author, items):
     feed = {
         'version': 'https://jsonfeed.org/version/1.1',
         'title': title,
-        'home_page_url': 'https://www.hoyolab.com/official/{:d}'.format(game_id),
+        'home_page_url': 'https://www.hoyolab.com/official/{}'.format(game_id),
         'feed_url': url,
         'icon': icon,
         'language': lang,
@@ -145,7 +145,7 @@ def create_atom_feed_file(game_id, path, url, icon, lang, title, author, items):
     root.setAttribute('xmlns', 'http://www.w3.org/2005/Atom')
     root.setAttribute('xml:lang', lang)
 
-    append_text_node(doc, root, 'id', 'tag:hoyolab.com,2021:/official/{:d}'.format(game_id))
+    append_text_node(doc, root, 'id', 'tag:hoyolab.com,2021:/official/{}'.format(game_id))
     append_text_node(doc, root, 'title', title)
     append_text_node(doc, root, 'updated', datetime.now().astimezone().isoformat())
     append_attr_node(doc, root, 'link', {'href': 'https://www.hoyolab.com/official/{:d}'.format(game_id),
