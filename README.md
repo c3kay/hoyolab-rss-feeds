@@ -10,8 +10,11 @@ Some feeds are already hosted by myself. You can find more information about the
 
 ### Configuration
 
-To run the script, you need to do some configuration, which is done via the `feeds.conf` file.
-A JSON and Atom feed is created for each configured section/game. Check the example file for further details.
-More information about the config file format can be found [here](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure).
+To run the script, you need to do some configuration, which is done via a file.
+A JSON and Atom feed is created for each configured section/game. Check the `example.conf` file for further details.
+More information about the config file format can be found [here](https://en.wikipedia.org/wiki/INI_file).
+
+You can set a custom path for the config file via the environment variable `HOYOLAB_CONFIG_PATH`. 
+The default file is `feeds.conf` which should be in the same folder as the script. 
 
 <sub>*Disclaimer: The content of the generated feeds is the property of Cognosphere PTE., LTD. and their respective owners.*</sub>

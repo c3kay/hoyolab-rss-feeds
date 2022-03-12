@@ -1,8 +1,8 @@
 import requests
 import json
-from configparser import ConfigParser
 from os.path import exists
-from os import getcwd
+from os import getenv
+from configparser import ConfigParser
 from time import sleep
 from datetime import datetime
 from xml.dom import minidom
@@ -278,6 +278,8 @@ def get_game_id(game_name):
         'starrail': 6
     }
 
+    game_name = game_name.lower()
+
     if game_name not in games:
         raise RuntimeError('Unknown game "{}"'.format(game_name))
 
@@ -286,7 +288,8 @@ def get_game_id(game_name):
 
 def main():
     conf_parser = ConfigParser()
-    conf_parser.read('{}/feeds.conf'.format(getcwd()))
+    conf_path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf')
+    conf_parser.read(conf_path)
     sections = conf_parser.sections()
 
     if len(sections) == 0:
