@@ -23,6 +23,6 @@ jobs:
           REMOTE_HOST: ${{ secrets.HOST }}
           REMOTE_USER: ${{ secrets.USER }}
           SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          TARGET: ${{ secrets.TARGET }}
           SOURCE: "hoyolab.py"
-          TARGET: "/srv/www/scripts/"
           ARGS: "-auvz"
