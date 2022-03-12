@@ -2,6 +2,7 @@ import requests
 import json
 from configparser import ConfigParser
 from os.path import exists
+from os import getcwd
 from time import sleep
 from datetime import datetime
 from xml.dom import minidom
@@ -285,7 +286,7 @@ def get_game_id(game_name):
 
 def main():
     conf_parser = ConfigParser()
-    conf_parser.read('feeds.conf')
+    conf_parser.read('{}/feeds.conf'.format(getcwd()))
     sections = conf_parser.sections()
 
     if len(sections) == 0:
