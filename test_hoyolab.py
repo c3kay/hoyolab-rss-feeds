@@ -1,33 +1,34 @@
-from hoyolab import main
-from os import environ
+from hoyolab import create_game_feeds
 from os.path import exists
 import atoma
 
 
-def init_environ(d):
-    environ['HOYOLAB_JSON_PATH'] = '{}/hoyolab.json'.format(d)
-    environ['HOYOLAB_ATOM_PATH'] = '{}/hoyolab.xml'.format(d)
-    environ['HOYOLAB_JSON_URL'] = 'hoyolab.json'
-    environ['HOYOLAB_ATOM_URL'] = 'hoyolab.xml'
-    environ['HOYOLAB_ENTRIES'] = '1'
+def check_feeds(json_file, atom_file):
+    assert exists(json_file)
+    assert exists(atom_file)
+
+    json_feed = atoma.parse_json_feed_file(json_file)
+
+    assert len(json_feed.items) == 3
+
+    atom_feed = atoma.parse_atom_file(atom_file)
+
+    assert len(atom_feed.entries) == 3
 
 
-def test_feeds(tmpdir):
-    init_environ(tmpdir)
+def test_genshin_en(tmpdir):
+    json_file = '{}/genshin.json'.format(tmpdir)
+    atom_file = '{}/genshin.xml'.format(tmpdir)
 
-    json_path = environ['HOYOLAB_JSON_PATH']
-    atom_path = environ['HOYOLAB_ATOM_PATH']
-    num_entries = int(environ['HOYOLAB_ENTRIES']) * 3
+    create_game_feeds(2, json_file, atom_file, json_file, atom_file, 'icon.png', 'Genshin News', 'Paimon', 1)
 
-    main()
+    check_feeds(json_file, atom_file)
 
-    assert exists(json_path)
-    assert exists(atom_path)
 
-    json_feed = atoma.parse_json_feed_file(json_path)
+def test_honkai_de(tmpdir):
+    json_file = '{}/honkai.json'.format(tmpdir)
+    atom_file = '{}/honkai.xml'.format(tmpdir)
 
-    assert len(json_feed.items) == num_entries
+    create_game_feeds(1, json_file, atom_file, json_file, atom_file, 'icon.png', 'Honkai News', 'AI-Chan', 1, 'de-DE')
 
-    atom_feed = atoma.parse_atom_file(atom_path)
-
-    assert len(atom_feed.entries) == num_entries
+    check_feeds(json_file, atom_file)

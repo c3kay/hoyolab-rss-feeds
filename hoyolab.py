@@ -1,6 +1,6 @@
 import requests
 import json
-from os import environ
+from configparser import ConfigParser
 from os.path import exists
 from datetime import datetime
 from xml.dom import minidom
@@ -8,15 +8,16 @@ from xml.dom import minidom
 
 # -- REQUESTS -- #
 
-def request_news(category, num_entries):
+def request_news(game_id, category, num_entries, lang='en-US'):
     headers = {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Origin': 'https://www.hoyolab.com'
+        'Origin': 'https://www.hoyolab.com',
+        'X-Rpc-Language': lang
     }
 
     params = {
-        'gids': 2,
+        'gids': game_id,
         'page_size': num_entries,
         'type': category
     }
@@ -42,15 +43,16 @@ def request_news(category, num_entries):
         raise RuntimeError('Unexpected response!') from err
 
 
-def request_post(post_id):
+def request_post(game_id, post_id, lang='en-US'):
     headers = {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Origin': 'https://www.hoyolab.com'
+        'Origin': 'https://www.hoyolab.com',
+        'X-Rpc-Language': lang
     }
 
     params = {
-        'gids': 2,
+        'gids': game_id,
         'post_id': post_id
     }
 
@@ -77,14 +79,15 @@ def request_post(post_id):
 
 # -- JSON FEED -- #
 
-def create_json_feed_file(path, feed_url, items):
+def create_json_feed_file(game_id, path, url, icon, lang, title, author, items):
     feed = {
         'version': 'https://jsonfeed.org/version/1.1',
-        'title': 'Genshin Impact News',
-        'home_page_url': 'https://www.hoyolab.com/',
-        'feed_url': feed_url,
-        'icon': 'https://img-os-static.hoyolab.com/communityWeb/upload/1d7dd8f33c5ccdfdeac86e1e86ddd652.png',
-        'language': 'en',
+        'title': title,
+        'home_page_url': 'https://www.hoyolab.com/official/{:d}'.format(game_id),
+        'feed_url': url,
+        'icon': icon,
+        'language': lang,
+        'authors': [{'name': author}],
         'items': items
     }
 
@@ -133,24 +136,25 @@ def create_json_feed_item(post):
 
 # -- ATOM FEED -- #
 
-def create_atom_feed_file(path, feed_url, items):
+def create_atom_feed_file(game_id, path, url, icon, lang, title, author, items):
     doc = minidom.getDOMImplementation().createDocument(None, 'feed', None)
     root = doc.documentElement
 
     # workaround...
     root.setAttribute('xmlns', 'http://www.w3.org/2005/Atom')
-    root.setAttribute('xml:lang', 'en')
+    root.setAttribute('xml:lang', lang)
 
-    append_text_node(doc, root, 'id', 'tag:hoyolab.com,2021:/official/2')
-    append_text_node(doc, root, 'title', 'Genshin Impact News')
+    append_text_node(doc, root, 'id', 'tag:hoyolab.com,2021:/official/{:d}'.format(game_id))
+    append_text_node(doc, root, 'title', title)
     append_text_node(doc, root, 'updated', datetime.now().astimezone().isoformat())
-    append_attr_node(doc, root, 'link', {'href': 'https://www.hoyolab.com/', 'rel': 'alternate', 'type': 'text/html'})
-    append_attr_node(doc, root, 'link', {'href': feed_url, 'rel': 'self', 'type': 'application/atom+xml'})
-    append_text_node(doc, root, 'icon', 'https://img-os-static.hoyolab.com/communityWeb/upload/1d7dd8f33c5ccdfdeac86e1e86ddd652.png')
+    append_attr_node(doc, root, 'link', {'href': 'https://www.hoyolab.com/official/{:d}'.format(game_id),
+                                         'rel': 'alternate', 'type': 'text/html'})
+    append_attr_node(doc, root, 'link', {'href': url, 'rel': 'self', 'type': 'application/atom+xml'})
+    append_text_node(doc, root, 'icon', icon)
 
-    author = doc.createElement('author')
-    append_text_node(doc, author, 'name', 'Paimon')
-    root.appendChild(author)
+    author_el = doc.createElement('author')
+    append_text_node(doc, author_el, 'name', author)
+    root.appendChild(author_el)
 
     for item in items:
         entry = create_atom_feed_entry(doc, item)
@@ -211,12 +215,12 @@ def get_known_post_ids(feed_items):
     return known_ids
 
 
-def get_latest_post_ids(num_entries):
+def get_latest_post_ids(game_id, num_entries, lang):
     all_posts = []
 
     # collect posts from all 3 news categories
     for cat in range(1, 4):
-        cat_news = request_news(cat, num_entries)
+        cat_news = request_news(game_id, cat, num_entries, lang)
         all_posts.extend(cat_news)
 
     # dict of ids with latest modification timestamp
@@ -233,21 +237,12 @@ def get_post_id_diff(fetched_ids, known_ids):
     return new_ids
 
 
-def main():
-    try:
-        json_feed_path = environ['HOYOLAB_JSON_PATH']
-        atom_feed_path = environ['HOYOLAB_ATOM_PATH']
-        json_feed_url = environ['HOYOLAB_JSON_URL']
-        atom_feed_url = environ['HOYOLAB_ATOM_URL']
-        num_entries = int(environ['HOYOLAB_ENTRIES'])
-    except KeyError as err:
-        raise RuntimeError('Error at loading feed environment variables!') from err
-
+def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5, lang='en-US'):
     # json feed as reference for known items since it is easier to parse...
-    feed_items = load_json_feed_items(json_feed_path)
+    feed_items = load_json_feed_items(json_path)
 
     known_ids = get_known_post_ids(feed_items)
-    fetched_ids = get_latest_post_ids(num_entries)
+    fetched_ids = get_latest_post_ids(game_id, num_entries, lang)
     id_diff = get_post_id_diff(fetched_ids, known_ids)
 
     # remove modified items from feed item list (if exists)
@@ -256,11 +251,11 @@ def main():
 
     # add diff items to existing feed
     for post_id in id_diff:
-        post = request_post(post_id)
+        post = request_post(game_id, post_id, lang)
         feed_items.append(create_json_feed_item(post))
 
     # feed was updated or atom file is missing (possibly due to error)
-    if len(id_diff) > 0 or not exists(atom_feed_path):
+    if len(id_diff) > 0 or not exists(atom_path):
         # sort feed items desc. so that latest is at the top
         feed_items.sort(key=lambda x: int(x['id']), reverse=True)
 
@@ -268,8 +263,43 @@ def main():
         limit = 3 * num_entries  # equals one full fetch
         feed_items = feed_items[:limit]
 
-        create_atom_feed_file(atom_feed_path, atom_feed_url, feed_items)
-        create_json_feed_file(json_feed_path, json_feed_url, feed_items)
+        create_atom_feed_file(game_id, atom_path, atom_url, icon, lang, title, author, feed_items)
+        create_json_feed_file(game_id, json_path, json_url, icon, lang, title, author, feed_items)
+
+
+def get_game_id(game_name):
+    games = {
+        'honkai': 1,
+        'genshin': 2,
+        'tearsofthemis': 4,
+        'starrail': 6
+    }
+
+    if game_name not in games:
+        raise RuntimeError('Unknown game "{}"'.format(game_name))
+
+    return games[game_name]
+
+
+def main():
+    conf_parser = ConfigParser()
+    conf_parser.read('feeds.conf')
+
+    for game in conf_parser.sections():
+        game_id = get_game_id(game)
+        conf = conf_parser[game]
+
+        json_path = conf.get('json_path', 'feed.json')
+        atom_path = conf.get('atom_path', 'feed.xml')
+        json_url = conf.get('json_url', 'feed.json')
+        atom_url = conf.get('atom_url', 'feed.xml')
+        icon = conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico')
+        title = conf.get('title', 'Untitled')
+        author = conf.get('author', 'Unknown')
+        num_entries = conf.getint('num_entries', 5)
+        lang = conf.get('language', 'en-US')
+
+        create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries, lang)
 
 
 if __name__ == '__main__':
