@@ -6,12 +6,12 @@ from os.path import join
 from os import environ
 
 
-def setup_config(conf_file, json_file, atom_file):
+def setup_config(conf_file, json_file, atom_file, game_name):
     conf_parser = ConfigParser()
-    conf_parser.add_section('starrail')
-    conf_parser.set('starrail', 'json_path', json_file)
-    conf_parser.set('starrail', 'atom_path', atom_file)
-    conf_parser.set('starrail', 'entries', '1')
+    conf_parser.add_section(game_name)
+    conf_parser.set(game_name, 'json_path', json_file)
+    conf_parser.set(game_name, 'atom_path', atom_file)
+    conf_parser.set(game_name, 'entries', '1')
 
     with open(conf_file, 'w') as f:
         conf_parser.write(f)
@@ -39,8 +39,8 @@ def test_genshin_en(tmpdir):
 
 
 def test_honkai_de(tmpdir):
-    json_file = join(tmpdir, 'genshin.json')
-    atom_file = join(tmpdir, 'genshin.xml')
+    json_file = join(tmpdir, 'honkai.json')
+    atom_file = join(tmpdir, 'honkai.xml')
 
     hoyolab.create_game_feeds(1, json_file, atom_file, json_file, atom_file, 'icon.png', 'Honkai News', 'AI-Chan', 1, 'de-DE')
     check_feeds(json_file, atom_file)
@@ -48,9 +48,9 @@ def test_honkai_de(tmpdir):
 
 def test_starrail_config(tmpdir):
     conf_file = join(tmpdir, 'myfeed.conf')
-    json_file = join(tmpdir, 'genshin.json')
-    atom_file = join(tmpdir, 'genshin.xml')
+    json_file = join(tmpdir, 'starrail.json')
+    atom_file = join(tmpdir, 'starrail.xml')
 
-    setup_config(conf_file, json_file, atom_file)
+    setup_config(conf_file, json_file, atom_file, 'starrail')
     hoyolab.main()
     check_feeds(json_file, atom_file)
