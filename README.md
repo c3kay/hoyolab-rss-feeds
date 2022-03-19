@@ -1,6 +1,7 @@
 # Hoyolab RSS Feeds
 
-![Workflow Status](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/action.yaml/badge.svg)
+![Test Status](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/test.yaml/badge.svg)
+![Deploy Status](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/deploy.yaml/badge.svg)
 
 This script creates [JSON Feeds](https://jsonfeed.org) and [Atom Feeds](https://datatracker.ietf.org/doc/html/rfc4287)
 for Hoyoverse games like Genshin Impact or Honkai Impact 3rd based on the official [Hoyolab](https://www.hoyolab.com) news.

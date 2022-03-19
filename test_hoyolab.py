@@ -42,7 +42,8 @@ def test_honkai_de(tmpdir):
     json_file = join(tmpdir, 'honkai.json')
     atom_file = join(tmpdir, 'honkai.xml')
 
-    hoyolab.create_game_feeds(1, json_file, atom_file, json_file, atom_file, 'icon.png', 'Honkai News', 'AI-Chan', 1, 'de-DE')
+    hoyolab.create_game_feeds(1, json_file, atom_file, json_file, atom_file, 'icon.png', 'Honkai News', 'AI-Chan', 1,
+                              'de-DE')
     check_feeds(json_file, atom_file)
 
 

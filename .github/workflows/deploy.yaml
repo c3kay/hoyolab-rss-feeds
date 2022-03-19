@@ -1,0 +1,26 @@
+name: Deploy
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    environment:
+      description: 'Target Deploy Environment'
+      type: environment
+      required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: c3kay-server
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@main
+        env:
+          REMOTE_HOST: ${{ secrets.HOST }}
+          REMOTE_USER: ${{ secrets.USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          TARGET: ${{ secrets.TARGET }}
+          SOURCE: "hoyolab.py"
+          ARGS: "-auvz"

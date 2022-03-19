@@ -239,7 +239,8 @@ def get_post_id_diff(fetched_ids, known_ids):
     return new_ids
 
 
-def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5, lang='en-US'):
+def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5,
+                      lang='en-US'):
     # json feed as reference for known items since it is easier to parse...
     feed_items = load_json_feed_items(json_path)
 
