@@ -1,13 +1,9 @@
 name: Deploy
 on:
+  workflow_dispatch:
   release:
     types:
       - published
-  workflow_dispatch:
-    environment:
-      description: 'Target Deploy Environment'
-      type: environment
-      required: true
 
 jobs:
   deploy:

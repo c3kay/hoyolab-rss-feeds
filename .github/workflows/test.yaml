@@ -1,5 +1,16 @@
 name: Test
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '**.py'
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - '**.py'
+
 jobs:
   lint:
     runs-on: ubuntu-latest
