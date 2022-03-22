@@ -87,5 +87,5 @@ def test_starrail_config(tmpdir):
     atom_file = join(tmpdir, 'starrail.xml')
 
     setup_config(conf_file, json_file, atom_file, 'starrail', 1)
-    hoyolab.main()
+    hoyolab.create_game_feeds_from_config()
     check_feeds(json_file, atom_file, 3)
