@@ -239,6 +239,23 @@ def get_post_id_diff(fetched_ids, known_ids):
     return new_ids
 
 
+def get_game_id(game_name):
+    # 3 = unused ; 5 = hoyolab internal news
+    games = {
+        'honkai': 1,
+        'genshin': 2,
+        'tearsofthemis': 4,
+        'starrail': 6
+    }
+
+    game_name = game_name.lower()
+
+    if game_name not in games:
+        raise RuntimeError('Unknown game "{}"'.format(game_name))
+
+    return games[game_name]
+
+
 def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5,
                       lang='en-US'):
     # json feed as reference for known items since it is easier to parse...
@@ -270,51 +287,35 @@ def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, t
         create_json_feed_file(game_id, json_path, json_url, icon, lang, title, author, feed_items)
 
 
-def get_game_id(game_name):
-    # 3 = unused ; 5 = hoyolab internal news
-    games = {
-        'honkai': 1,
-        'genshin': 2,
-        'tearsofthemis': 4,
-        'starrail': 6
-    }
-
-    game_name = game_name.lower()
-
-    if game_name not in games:
-        raise RuntimeError('Unknown game "{}"'.format(game_name))
-
-    return games[game_name]
-
-
-def main():
+def create_game_feeds_from_config(path=None, sleep_between=True):
     conf_parser = ConfigParser()
-    conf_path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf')
+    conf_path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf') if path is None else path
     conf_parser.read(conf_path)
-    sections = conf_parser.sections()
+    games = conf_parser.sections()
 
-    if len(sections) == 0:
+    if len(games) == 0:
         raise RuntimeError('No feeds configured!')
 
-    for game in sections:
-        game_id = get_game_id(game)
+    for game in games:
         conf = conf_parser[game]
 
-        json_path = conf.get('json_path', 'feed.json')
-        atom_path = conf.get('atom_path', 'feed.xml')
-        json_url = conf.get('json_url', 'feed.json')
-        atom_url = conf.get('atom_url', 'feed.xml')
-        icon = conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico')
-        title = conf.get('title', 'Untitled')
-        author = conf.get('author', 'Unknown')
-        num_entries = int(conf.get('entries', '5'))
-        lang = conf.get('language', 'en-US')
-
-        create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries, lang)
+        create_game_feeds(
+            get_game_id(game),
+            conf.get('json_path', 'feed.json'),
+            conf.get('atom_path', 'feed.xml'),
+            conf.get('json_url', 'feed.json'),
+            conf.get('atom_url', 'feed.xml'),
+            conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico'),
+            conf.get('title', 'Untitled'),
+            conf.get('author', 'Unknown'),
+            int(conf.get('entries', '5')),
+            conf.get('language', 'en-US')
+        )
 
         # precaution against rate limits
-        sleep(1)
+        if sleep_between and len(games) > 1:
+            sleep(1)
 
 
 if __name__ == '__main__':
-    main()
+    create_game_feeds_from_config()
