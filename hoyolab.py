@@ -42,8 +42,9 @@ def get_game_id(game_name):
 
 # -- REQUESTS -- #
 
-def request_news(game_id, category, num_entries, lang='en-US', http_session=None):
+def request_news(game_id, category, num_entries, lang='en-us', http_session=None):
     session = requests.Session() if http_session is None else http_session
+    lang = lang.lower()
 
     headers = {
         'Origin': 'https://www.hoyolab.com',
@@ -79,8 +80,9 @@ def request_news(game_id, category, num_entries, lang='en-US', http_session=None
         raise RuntimeError('Unexpected response!') from err
 
 
-def request_post(game_id, post_id, lang='en-US', http_session=None):
+def request_post(game_id, post_id, lang='en-us', http_session=None):
     session = requests.Session() if http_session is None else http_session
+    lang = lang.lower()
 
     headers = {
         'Origin': 'https://www.hoyolab.com',
@@ -286,7 +288,7 @@ def get_post_id_diff(fetched_ids, known_ids):
 
 
 def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5,
-                      lang='en-US', http_session=None):
+                      lang='en-us', http_session=None):
     session = requests.Session() if http_session is None else http_session
 
     # json feed as reference for known items since it is easier to parse...
@@ -349,7 +351,7 @@ def create_game_feeds_from_config(path=None, sleep_between=True):
                 conf.get('title', 'Untitled'),
                 conf.get('author', 'Unknown'),
                 int(conf.get('entries', '5')),
-                conf.get('language', 'en-US'),
+                conf.get('language', 'en-us'),
                 session
             )
 

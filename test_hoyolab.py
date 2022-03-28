@@ -86,7 +86,7 @@ def test_honkai_de(tmpdir):
         'Honkai News',
         'Ai-chan',
         1,
-        'de-DE'
+        'de-de'
     )
 
     check_feeds(json_file, atom_file, 3)
