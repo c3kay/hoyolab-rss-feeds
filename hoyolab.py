@@ -8,14 +8,44 @@ from datetime import datetime
 from xml.dom import minidom
 
 
+# -- MAPPINGS -- #
+
+def get_category_name(category_id):
+    categories = {
+        1: 'Notices',
+        2: 'Events',
+        3: 'Info'
+    }
+
+    if category_id not in categories:
+        raise RuntimeError('Unknown category ID {}'.format(category_id))
+
+    return categories[category_id]
+
+
+def get_game_id(game_name):
+    # 3 = unused ; 5 = hoyolab internal news
+    games = {
+        'honkai': 1,
+        'genshin': 2,
+        'tearsofthemis': 4,
+        'starrail': 6
+    }
+
+    game_name = game_name.lower()
+
+    if game_name not in games:
+        raise RuntimeError('Unknown game "{}"'.format(game_name))
+
+    return games[game_name]
+
+
 # -- REQUESTS -- #
 
 def request_news(game_id, category, num_entries, lang='en-US', http_session=None):
     session = requests.Session() if http_session is None else http_session
 
     headers = {
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.5',
         'Origin': 'https://www.hoyolab.com',
         'X-Rpc-Language': lang
     }
@@ -53,8 +83,6 @@ def request_post(game_id, post_id, lang='en-US', http_session=None):
     session = requests.Session() if http_session is None else http_session
 
     headers = {
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.5',
         'Origin': 'https://www.hoyolab.com',
         'X-Rpc-Language': lang
     }
@@ -112,32 +140,39 @@ def load_json_feed_items(path):
     try:
         with open(path, 'r') as fd:
             feed = json.load(fd)
-        return feed['items']
+
+        feed_by_category = {}
+        for category_id in range(1, 4):
+            category_name = get_category_name(category_id)
+            feed_by_category[category_id] = list(filter(lambda x: 'tags' in x and x['tags'][0] == category_name,
+                                                        feed['items']))
+
+        return feed_by_category
     except IOError:
         # file not found -> create new feed list
-        return []
+        return {category_id: [] for category_id in range(1, 4)}
 
 
-def create_json_feed_item(game_id, post_id, lang='en-US', http_session=None):
-    post = request_post(game_id, post_id, lang, http_session)
-
-    ct = datetime.fromtimestamp(post['post']['created_at']).astimezone().isoformat()
+def create_json_feed_item(post):
+    published_str = datetime.fromtimestamp(post['post']['created_at']).astimezone().isoformat()
     content = post['post']['content']
+    category_name = get_category_name(post['post']['official_type'])
 
     if content.startswith(('<p><br></p>', '<p></p>', '<p>&nbsp;</p>')):
         content = content.partition('</p>')[2]
 
     item = {
-        'id': post_id,
-        'url': 'https://www.hoyolab.com/article/{}'.format(post_id),
+        'id': post['post']['post_id'],
+        'url': 'https://www.hoyolab.com/article/{}'.format(post['post']['post_id']),
         'title': post['post']['subject'],
+        'tags': [category_name],
         'content_html': content,
-        'date_published': ct
+        'date_published': published_str
     }
 
     if post['last_modify_time'] > 0:
-        mt = datetime.fromtimestamp(post['last_modify_time']).astimezone().isoformat()
-        item['date_modified'] = mt
+        modified_str = datetime.fromtimestamp(post['last_modify_time']).astimezone().isoformat()
+        item['date_modified'] = modified_str
 
     if len(post['image_list']) > 0:
         item['image'] = post['image_list'][0]['url']
@@ -181,11 +216,12 @@ def create_atom_feed_file(game_id, path, url, icon, lang, title, author, json_fe
 def create_atom_entry_from_json_item(doc, json_item):
     entry = doc.createElement('entry')
 
-    p_date = datetime.fromisoformat(json_item['date_published'])
-    append_text_node(doc, entry, 'id', 'tag:hoyolab.com,{:%Y-%m-%d}:{}'.format(p_date, json_item['id']))
+    published_day = json_item['date_published'].partition('T')[0]
+    append_text_node(doc, entry, 'id', 'tag:hoyolab.com,{}:{}'.format(published_day, json_item['id']))
 
     append_text_node(doc, entry, 'title', json_item['title'])
     append_attr_node(doc, entry, 'link', {'href': json_item['url'], 'rel': 'alternate', 'type': 'text/html'})
+    append_attr_node(doc, entry, 'category', {'term': json_item['tags'][0]})
     append_text_node(doc, entry, 'published', json_item['date_published'])
 
     updated = json_item['date_modified'] if 'date_modified' in json_item else json_item['date_published']
@@ -217,56 +253,36 @@ def append_attr_node(doc, parent, name, attr):
 def get_known_post_ids(feed_items):
     known_ids = {}
 
+    # create dict of known ids with their latest modification timestamp
     for item in feed_items:
-        ct = datetime.fromisoformat(item['date_published']).timestamp()
-        mt = datetime.fromisoformat(item['date_modified']).timestamp() if 'date_modified' in item else 0
-        known_ids[item['id']] = max(ct, mt)
+        published_ts = datetime.fromisoformat(item['date_published']).timestamp()
+        modified_ts = datetime.fromisoformat(item['date_modified']).timestamp() if 'date_modified' in item else 0
+        known_ids[item['id']] = max(published_ts, modified_ts)
 
-    # dict of ids with their latest modification timestamp
     return known_ids
 
 
-def get_latest_post_ids(game_id, num_entries, lang='en-US', http_session=None):
-    session = requests.Session() if http_session is None else http_session
-    all_posts = []
+def get_latest_post_ids(posts):
+    fetched_ids = {}
 
-    # collect posts from all 3 news categories
-    for cat in range(1, 4):
-        cat_news = request_news(game_id, cat, num_entries, lang=lang, http_session=session)
-        all_posts.extend(cat_news)
+    # create dict of fetched ids with their latest modification timestamp
+    for post in posts:
+        post_id = post['post']['post_id']
+        published_ts = post['post']['created_at']
+        modified_ts = post['last_modify_time']
+        fetched_ids[post_id] = max(published_ts, modified_ts)
 
-    if http_session is None:
-        session.close()
-
-    # dict of ids with their latest modification timestamp
-    return {p['post']['post_id']: max(p['last_modify_time'], p['post']['created_at']) for p in all_posts}
+    return fetched_ids
 
 
 def get_post_id_diff(fetched_ids, known_ids):
     new_ids = []
 
-    for post_id, modified in fetched_ids.items():
-        if post_id not in known_ids or (post_id in known_ids and modified > known_ids[post_id]):
-            new_ids.append(post_id)
+    for fetched_id, fetched_modified_ts in fetched_ids.items():
+        if fetched_id not in known_ids or (fetched_id in known_ids and fetched_modified_ts > known_ids[fetched_id]):
+            new_ids.append(fetched_id)
 
     return new_ids
-
-
-def get_game_id(game_name):
-    # 3 = unused ; 5 = hoyolab internal news
-    games = {
-        'honkai': 1,
-        'genshin': 2,
-        'tearsofthemis': 4,
-        'starrail': 6
-    }
-
-    game_name = game_name.lower()
-
-    if game_name not in games:
-        raise RuntimeError('Unknown game "{}"'.format(game_name))
-
-    return games[game_name]
 
 
 def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5,
@@ -274,30 +290,37 @@ def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, t
     session = requests.Session() if http_session is None else http_session
 
     # json feed as reference for known items since it is easier to parse...
-    feed_items = load_json_feed_items(json_path)
+    feed_items_by_category = load_json_feed_items(json_path)
+    feed_items_combined = []
+    was_updated = False
 
-    known_ids = get_known_post_ids(feed_items)
-    fetched_ids = get_latest_post_ids(game_id, num_entries, lang, session)
-    id_diff = get_post_id_diff(fetched_ids, known_ids)
+    for category_id, category_items in feed_items_by_category.items():
+        known_ids = get_known_post_ids(category_items)
+        fetched_posts = request_news(game_id, category_id, num_entries, lang, http_session)
+        fetched_ids = get_latest_post_ids(fetched_posts)
+        id_diff = get_post_id_diff(fetched_ids, known_ids)
 
-    # remove modified items from feed item list (if exists)
-    if len(id_diff) > 0 and len(feed_items) > 0:
-        feed_items = list(filter(lambda x: x['id'] not in id_diff, feed_items))
+        if len(id_diff) > 0 and len(category_items) > 0:
+            # remove modified items from feed item list
+            category_items = list(filter(lambda x: x['id'] not in id_diff, category_items))
 
-    for post_id in id_diff:
-        item = create_json_feed_item(game_id, post_id, lang, session)
-        feed_items.append(item)
+        for post_id in id_diff:
+            fetched_full_post = request_post(game_id, post_id, lang, http_session)
+            item = create_json_feed_item(fetched_full_post)
+            category_items.append(item)
 
-    # feed was updated or atom file is missing (possibly due to error)
-    if len(id_diff) > 0 or not exists(atom_path):
-        feed_items.sort(key=lambda x: int(x['id']), reverse=True)
+        if len(id_diff) > 0:
+            category_items.sort(key=lambda x: int(x['id']), reverse=True)
+            category_items = category_items[:num_entries]
+            was_updated = True
 
-        # cut off older entries to limit file size
-        limit = 3 * num_entries
-        feed_items = feed_items[:limit]
+        feed_items_combined.extend(category_items)
 
-        create_atom_feed_file(game_id, atom_path, atom_url, icon, lang, title, author, feed_items)
-        create_json_feed_file(game_id, json_path, json_url, icon, lang, title, author, feed_items)
+    if was_updated or not exists(atom_path):
+        feed_items_combined.sort(key=lambda x: int(x['id']), reverse=True)
+
+        create_atom_feed_file(game_id, atom_path, atom_url, icon, lang, title, author, feed_items_combined)
+        create_json_feed_file(game_id, json_path, json_url, icon, lang, title, author, feed_items_combined)
 
     if http_session is None:
         session.close()
@@ -325,9 +348,9 @@ def create_game_feeds_from_config(path=None, sleep_between=True):
                 conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico'),
                 conf.get('title', 'Untitled'),
                 conf.get('author', 'Unknown'),
-                num_entries=int(conf.get('entries', '5')),
-                lang=conf.get('language', 'en-US'),
-                http_session=session
+                int(conf.get('entries', '5')),
+                conf.get('language', 'en-US'),
+                session
             )
 
             # precaution against rate limits
