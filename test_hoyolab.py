@@ -29,7 +29,7 @@ def simulate_feed_changes(json_file):
     items = feed['items']
 
     # remove item to simulate new article
-    items.pop()
+    items.pop(0)
 
     # change timestamp to simulate update
     pt0 = datetime.fromisoformat(items[0]['date_published'])
@@ -57,7 +57,18 @@ def test_genshin_en(tmpdir):
     json_file = join(tmpdir, 'genshin.json')
     atom_file = join(tmpdir, 'genshin.xml')
 
-    hoyolab.create_game_feeds(2, json_file, atom_file, json_file, atom_file, 'icon.png', 'Genshin News', 'Paimon', 1)
+    hoyolab.create_game_feeds(
+        hoyolab.get_game_id('genshin'),
+        json_file,
+        atom_file,
+        json_file,
+        atom_file,
+        'icon.png',
+        'Genshin News',
+        'Paimon',
+        1
+    )
+
     check_feeds(json_file, atom_file, 3)
 
 
@@ -65,19 +76,54 @@ def test_honkai_de(tmpdir):
     json_file = join(tmpdir, 'honkai.json')
     atom_file = join(tmpdir, 'honkai.xml')
 
-    hoyolab.create_game_feeds(1, json_file, atom_file, json_file, atom_file, 'icon.png', 'Honkai News', 'AI-Chan', 1,
-                              'de-DE')
+    hoyolab.create_game_feeds(
+        hoyolab.get_game_id('honkai'),
+        json_file,
+        atom_file,
+        json_file,
+        atom_file,
+        'icon.png',
+        'Honkai News',
+        'Ai-chan',
+        1,
+        'de-DE'
+    )
+
     check_feeds(json_file, atom_file, 3)
 
 
 def test_themis_update(tmpdir):
     json_file = join(tmpdir, 'themis.json')
     atom_file = join(tmpdir, 'themis.xml')
+    game_id = hoyolab.get_game_id('tearsofthemis')
 
-    hoyolab.create_game_feeds(4, json_file, atom_file, json_file, atom_file, 'icon.png', 'Themis News', '-', 1)
+    hoyolab.create_game_feeds(
+        game_id,
+        json_file,
+        atom_file,
+        json_file,
+        atom_file,
+        'icon.png',
+        'Themis News',
+        '-',
+        1
+    )
+
     check_feeds(json_file, atom_file, 3)
     simulate_feed_changes(json_file)
-    hoyolab.create_game_feeds(4, json_file, atom_file, json_file, atom_file, 'icon.png', 'Themis News', '-', 1)
+
+    hoyolab.create_game_feeds(
+        game_id,
+        json_file,
+        atom_file,
+        json_file,
+        atom_file,
+        'icon.png',
+        'Themis News',
+        '-',
+        1
+    )
+
     check_feeds(json_file, atom_file, 3)
 
 
