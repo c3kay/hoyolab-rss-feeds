@@ -1,11 +1,19 @@
-import requests
+import asyncio
 import json
-from os.path import exists
-from os import getenv
 from configparser import ConfigParser
-from time import sleep
 from datetime import datetime
+from os import getenv
+from os.path import exists
 from xml.dom import minidom
+
+import aiohttp
+from aiofiles import open
+
+
+# -- CUSTOM ERROR CLASS -- #
+
+class HoyolabError(Exception):
+    pass
 
 
 # -- MAPPINGS -- #
@@ -42,8 +50,7 @@ def get_game_id(game_name):
 
 # -- REQUESTS -- #
 
-def request_news(game_id, category, num_entries, lang='en-us', http_session=None):
-    session = requests.Session() if http_session is None else http_session
+async def request_news(session, game_id, category, num_entries, lang='en-us'):
     lang = lang.lower()
 
     headers = {
@@ -58,30 +65,26 @@ def request_news(game_id, category, num_entries, lang='en-us', http_session=None
     }
 
     url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList'
-    response = session.get(url, headers=headers, params=params)
 
     try:
-        response.raise_for_status()
-        response_json = response.json()
+        async with session.get(url, headers=headers, params=params) as response:
+            response.raise_for_status()
+            response_json = await response.json(encoding='utf-8')
 
         if response_json['retcode'] != 0:
             # the message might be in chinese
-            raise RuntimeError('Hoyolab error occurred: "{}"'.format(response_json['message']))
-
-        if http_session is None:
-            session.close()
+            raise HoyolabError(response_json['message'])
 
         return response_json['data']['list']
-    except requests.HTTPError as err:
-        raise RuntimeError('Could not request news!') from err
+    except aiohttp.ClientError as err:
+        raise HoyolabError('Could not request news!') from err
     except json.JSONDecodeError as err:
-        raise RuntimeError('Could not parse json response!') from err
+        raise HoyolabError('Could not parse json response!') from err
     except KeyError as err:
-        raise RuntimeError('Unexpected response!') from err
+        raise HoyolabError('Unexpected response!') from err
 
 
-def request_post(game_id, post_id, lang='en-us', http_session=None):
-    session = requests.Session() if http_session is None else http_session
+async def request_post(session, game_id, post_id, lang='en-us'):
     lang = lang.lower()
 
     headers = {
@@ -95,31 +98,28 @@ def request_post(game_id, post_id, lang='en-us', http_session=None):
     }
 
     url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getPostFull'
-    response = session.get(url, headers=headers, params=params)
 
     try:
-        response.raise_for_status()
-        response_json = response.json()
+        async with session.get(url, headers=headers, params=params) as response:
+            response.raise_for_status()
+            response_json = await response.json(encoding='utf-8')
 
         if response_json['retcode'] != 0:
             # the message might be in chinese
-            raise RuntimeError('Hoyolab error occurred: "{}"'.format(response_json['message']))
-
-        if http_session is None:
-            session.close()
+            raise HoyolabError(response_json['message'])
 
         return response_json['data']['post']
-    except requests.HTTPError as err:
-        raise RuntimeError('Could not request post!') from err
+    except aiohttp.ClientError as err:
+        raise HoyolabError('Could not request news!') from err
     except json.JSONDecodeError as err:
-        raise RuntimeError('Could not parse json response!') from err
+        raise HoyolabError('Could not parse json response!') from err
     except KeyError as err:
-        raise RuntimeError('Unexpected response!') from err
+        raise HoyolabError('Unexpected response!') from err
 
 
 # -- JSON FEED -- #
 
-def create_json_feed_file(game_id, path, url, icon, lang, title, author, items):
+async def create_json_feed_file(game_id, path, url, icon, lang, title, author, items):
     feed = {
         'version': 'https://jsonfeed.org/version/1.1',
         'title': title,
@@ -132,16 +132,18 @@ def create_json_feed_file(game_id, path, url, icon, lang, title, author, items):
     }
 
     try:
-        with open(path, 'w', encoding='utf-8') as fd:
-            json.dump(feed, fd)
+        async with open(path, 'w', encoding='utf-8') as fd:
+            feed_json = json.dumps(feed)
+            await fd.write(feed_json)
     except IOError as err:
         raise RuntimeError('Could not write json file to {}!'.format(path)) from err
 
 
-def load_json_feed_items(path):
+async def load_json_feed_items(path):
     try:
-        with open(path, 'r') as fd:
-            feed = json.load(fd)
+        async with open(path, 'r', encoding='utf-8') as fd:
+            feed_json = await fd.read()
+            feed = json.loads(feed_json)
 
         feed_by_category = {}
         for category_id in range(1, 4):
@@ -184,7 +186,7 @@ def create_json_feed_item(post):
 
 # -- ATOM FEED -- #
 
-def create_atom_feed_file(game_id, path, url, icon, lang, title, author, json_feed_items):
+async def create_atom_feed_file(game_id, path, url, icon, lang, title, author, json_feed_items):
     doc = minidom.getDOMImplementation().createDocument(None, 'feed', None)
     root = doc.documentElement
 
@@ -209,10 +211,11 @@ def create_atom_feed_file(game_id, path, url, icon, lang, title, author, json_fe
         root.appendChild(entry)
 
     try:
-        with open(path, 'w', encoding='utf-8') as fd:
-            doc.writexml(fd, encoding='utf-8')
+        async with open(path, 'w', encoding='utf-8') as fd:
+            xml_feed = doc.toxml(encoding='utf-8')
+            await fd.write(xml_feed)
     except IOError as err:
-        raise RuntimeError('Could not write atom file to {}!'.format(path)) from err
+        raise RuntimeError('Could not write atom file to "{}"!'.format(path)) from err
 
 
 def create_atom_entry_from_json_item(doc, json_item):
@@ -287,78 +290,90 @@ def get_post_id_diff(fetched_ids, known_ids):
     return new_ids
 
 
-def create_game_feeds(game_id, json_path, atom_path, json_url, atom_url, icon, title, author, num_entries=5,
-                      lang='en-us', http_session=None):
-    session = requests.Session() if http_session is None else http_session
-
+async def create_game_feeds(session, game_id, json_path, atom_path, json_url, atom_url, icon, title, author,
+                            num_entries=5, lang='en-us'):
     # json feed as reference for known items since it is easier to parse...
-    feed_items_by_category = load_json_feed_items(json_path)
+    feed_items_by_category = await load_json_feed_items(json_path)
+
     feed_items_combined = []
     was_updated = False
 
-    for category_id, category_items in feed_items_by_category.items():
+    # concurrently fetch news from all categories
+    category_news = await asyncio.gather(
+        *[request_news(session, game_id, category_id, num_entries, lang)
+          for category_id in feed_items_by_category.keys()]
+    )
+
+    for fetched_posts, category_items in zip(category_news, feed_items_by_category.values()):
         known_ids = get_known_post_ids(category_items)
-        fetched_posts = request_news(game_id, category_id, num_entries, lang, http_session)
         fetched_ids = get_latest_post_ids(fetched_posts)
         id_diff = get_post_id_diff(fetched_ids, known_ids)
 
+        # remove modified items if any from category feed
         if len(id_diff) > 0 and len(category_items) > 0:
-            # remove modified items from feed item list
+
             category_items = list(filter(lambda x: x['id'] not in id_diff, category_items))
 
-        for post_id in id_diff:
-            fetched_full_post = request_post(game_id, post_id, lang, http_session)
-            item = create_json_feed_item(fetched_full_post)
-            category_items.append(item)
+        # concurrently fetch full text of all new or edited posts
+        fetched_full_posts = await asyncio.gather(
+            *[request_post(session, game_id, post_id, lang) for post_id in id_diff]
+        )
 
+        # convert posts to items and add to category feed
+        category_items.extend([create_json_feed_item(post) for post in fetched_full_posts])
+
+        # cut off older entries if new have been added
         if len(id_diff) > 0:
             category_items.sort(key=lambda x: int(x['id']), reverse=True)
             category_items = category_items[:num_entries]
             was_updated = True
 
+        # add category items to feed
         feed_items_combined.extend(category_items)
 
     if was_updated or not exists(atom_path):
         feed_items_combined.sort(key=lambda x: int(x['id']), reverse=True)
 
-        create_atom_feed_file(game_id, atom_path, atom_url, icon, lang, title, author, feed_items_combined)
-        create_json_feed_file(game_id, json_path, json_url, icon, lang, title, author, feed_items_combined)
+        # concurrently create feed files
+        await asyncio.gather(
+            create_atom_feed_file(game_id, atom_path, atom_url, icon, lang, title, author, feed_items_combined),
+            create_json_feed_file(game_id, json_path, json_url, icon, lang, title, author, feed_items_combined)
+        )
 
-    if http_session is None:
-        session.close()
 
+async def create_game_feeds_from_config(config_path=None):
+    path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf') if config_path is None else config_path
 
-def create_game_feeds_from_config(path=None, sleep_between=True):
     conf_parser = ConfigParser()
-    conf_path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf') if path is None else path
-    conf_parser.read(conf_path)
+    conf_parser.read(path)
     games = conf_parser.sections()
 
     if len(games) == 0:
-        raise RuntimeError('No feeds configured!')
+        raise HoyolabError('No feeds configured!')
 
-    with requests.Session() as session:
-        for game in games:
-            conf = conf_parser[game]
+    game_configs = [(get_game_id(game), conf_parser[game]) for game in games]
 
-            create_game_feeds(
-                get_game_id(game),
-                conf.get('json_path', 'feed.json'),
-                conf.get('atom_path', 'feed.xml'),
-                conf.get('json_url', 'feed.json'),
-                conf.get('atom_url', 'feed.xml'),
-                conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico'),
-                conf.get('title', 'Untitled'),
-                conf.get('author', 'Unknown'),
-                int(conf.get('entries', '5')),
-                conf.get('language', 'en-us'),
-                session
-            )
-
-            # precaution against rate limits
-            if sleep_between and len(games) > 1:
-                sleep(1)
+    async with aiohttp.ClientSession() as session:
+        # concurrently create game feeds
+        await asyncio.gather(
+            *[
+                create_game_feeds(
+                    session,
+                    game_id,
+                    conf.get('json_path', 'feed.json'),
+                    conf.get('atom_path', 'feed.xml'),
+                    conf.get('json_url', 'feed.json'),
+                    conf.get('atom_url', 'feed.xml'),
+                    conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico'),
+                    conf.get('title', 'Untitled'),
+                    conf.get('author', 'Unknown'),
+                    int(conf.get('entries', '5')),
+                    conf.get('language', 'en-us')
+                )
+                for game_id, conf in game_configs
+            ]
+        )
 
 
 if __name__ == '__main__':
-    create_game_feeds_from_config()
+    asyncio.run(create_game_feeds_from_config())
