@@ -1,0 +1,8 @@
+pytest~=7.1.1
+pytest-aiohttp~=1.0.4
+pytest-cov~=3.0.0
+atoma~=0.0.17
+aiohttp~=3.8.1
+aiofiles~=0.8.0
+cchardet~=2.1.7
+aiodns~=3.0.0
