@@ -2,8 +2,7 @@ name: Deploy
 on:
   workflow_dispatch:
   release:
-    types:
-      - published
+    types: [published]
 
 jobs:
   deploy:
@@ -11,6 +10,7 @@ jobs:
     environment: c3kay-server
     steps:
       - uses: actions/checkout@v2
+
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@main
         env:
