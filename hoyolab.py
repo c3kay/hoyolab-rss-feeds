@@ -26,7 +26,7 @@ def get_category_name(category_id):
     }
 
     if category_id not in categories:
-        raise RuntimeError('Unknown category ID {}'.format(category_id))
+        raise HoyolabError('Unknown category ID {}'.format(category_id))
 
     return categories[category_id]
 
@@ -43,7 +43,7 @@ def get_game_id(game_name):
     game_name = game_name.lower()
 
     if game_name not in games:
-        raise RuntimeError('Unknown game "{}"'.format(game_name))
+        raise HoyolabError('Unknown game "{}"'.format(game_name))
 
     return games[game_name]
 
@@ -136,7 +136,7 @@ async def create_json_feed_file(game_id, path, url, icon, lang, title, author, i
             feed_json = json.dumps(feed)
             await fd.write(feed_json)
     except IOError as err:
-        raise RuntimeError('Could not write json file to {}!'.format(path)) from err
+        raise HoyolabError('Could not write json file to {}!'.format(path)) from err
 
 
 async def load_json_feed_items(path):
@@ -197,7 +197,7 @@ async def create_atom_feed_file(game_id, path, url, icon, lang, title, author, j
     append_text_node(doc, root, 'id', 'tag:hoyolab.com,2021:/official/{}'.format(game_id))
     append_text_node(doc, root, 'title', title)
     append_text_node(doc, root, 'updated', datetime.now().astimezone().isoformat())
-    append_attr_node(doc, root, 'link', {'href': 'https://www.hoyolab.com/official/{:d}'.format(game_id),
+    append_attr_node(doc, root, 'link', {'href': 'https://www.hoyolab.com/official/{}'.format(game_id),
                                          'rel': 'alternate', 'type': 'text/html'})
     append_attr_node(doc, root, 'link', {'href': url, 'rel': 'self', 'type': 'application/atom+xml'})
     append_text_node(doc, root, 'icon', icon)
@@ -213,9 +213,9 @@ async def create_atom_feed_file(game_id, path, url, icon, lang, title, author, j
     try:
         async with open(path, 'w', encoding='utf-8') as fd:
             xml_feed = doc.toxml(encoding='utf-8')
-            await fd.write(xml_feed)
+            await fd.write(xml_feed.decode())
     except IOError as err:
-        raise RuntimeError('Could not write atom file to "{}"!'.format(path)) from err
+        raise HoyolabError('Could not write atom file to "{}"!'.format(path)) from err
 
 
 def create_atom_entry_from_json_item(doc, json_item):
@@ -262,7 +262,7 @@ def get_known_post_ids(feed_items):
     for item in feed_items:
         published_ts = datetime.fromisoformat(item['date_published']).timestamp()
         modified_ts = datetime.fromisoformat(item['date_modified']).timestamp() if 'date_modified' in item else 0
-        known_ids[item['id']] = max(published_ts, modified_ts)
+        known_ids[item['id']] = int(max(published_ts, modified_ts))
 
     return known_ids
 
@@ -275,7 +275,7 @@ def get_latest_post_ids(posts):
         post_id = post['post']['post_id']
         published_ts = post['post']['created_at']
         modified_ts = post['last_modify_time']
-        fetched_ids[post_id] = max(published_ts, modified_ts)
+        fetched_ids[post_id] = int(max(published_ts, modified_ts))
 
     return fetched_ids
 
@@ -311,7 +311,6 @@ async def create_game_feeds(session, game_id, json_path, atom_path, json_url, at
 
         # remove modified items if any from category feed
         if len(id_diff) > 0 and len(category_items) > 0:
-
             category_items = list(filter(lambda x: x['id'] not in id_diff, category_items))
 
         # concurrently fetch full text of all new or edited posts
@@ -341,11 +340,14 @@ async def create_game_feeds(session, game_id, json_path, atom_path, json_url, at
         )
 
 
-async def create_game_feeds_from_config(config_path=None):
+async def create_game_feeds_from_config(config_path=None, event_loop=None):
     path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf') if config_path is None else config_path
 
+    async with open(path, 'r') as fd:
+        conf_str = await fd.read()
+
     conf_parser = ConfigParser()
-    conf_parser.read(path)
+    conf_parser.read_string(conf_str)
     games = conf_parser.sections()
 
     if len(games) == 0:
@@ -353,7 +355,7 @@ async def create_game_feeds_from_config(config_path=None):
 
     game_configs = [(get_game_id(game), conf_parser[game]) for game in games]
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(loop=event_loop) as session:
         # concurrently create game feeds
         await asyncio.gather(
             *[
