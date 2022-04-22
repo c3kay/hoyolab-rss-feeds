@@ -1,7 +1,8 @@
 # Hoyolab RSS Feeds
 
-![Test Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Test/master?label=tests&style=flat-square)
-![Deploy Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Deploy/master?label=deploy&style=flat-square)
+![Test Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Test/master?label=tests&style=flat)
+![Deploy Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Deploy/master?label=deploy&style=flat)
+![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master?style=flat)
 
 This script creates [JSON Feeds](https://jsonfeed.org) and [Atom Feeds](https://datatracker.ietf.org/doc/html/rfc4287)
 for Hoyoverse games like [Genshin Impact](https://genshin.hoyoverse.com/en/home) or 
