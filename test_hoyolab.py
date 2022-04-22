@@ -9,6 +9,7 @@ from os.path import join
 
 import aiofiles
 import atoma
+import langdetect
 import pytest
 from aiohttp import ClientSession
 
@@ -129,7 +130,33 @@ def test_known_post_ids():
     assert hoyolab.get_known_post_ids(feed_items) == expected
 
 
-# -- (ASYNC) API & IO TESTS -- #
+def test_latest_post_ids():
+    posts = [
+        {
+            'post': {
+                'post_id': '12345',
+                'created_at': 1645564942
+            },
+            'last_modify_time': 1645564943
+        },
+        {
+            'post': {
+                'post_id': '23456',
+                'created_at': 1645564944
+            },
+            'last_modify_time': 0
+        }
+    ]
+
+    expected = {
+        '12345': 1645564943,
+        '23456': 1645564944
+    }
+
+    assert hoyolab.get_latest_post_ids(posts) == expected
+
+
+# -- API & IO TESTS -- #
 
 async def test_request_news(session, game_id, category_id):
     req = await hoyolab.request_news(session, game_id, category_id, 3)
@@ -153,6 +180,24 @@ async def test_request_post(session, game_id):
     req = await hoyolab.request_post(session, game_id, post_ids[game_id])
 
     validate_api_response(req)
+
+
+async def test_language(session):
+    # apparently needed to get constant results
+    langdetect.DetectorFactory.seed = 42
+
+    req_news = await hoyolab.request_news(session, 2, 1, 1, 'de-de')
+
+    for post in req_news:
+        validate_api_response(post)
+        assert langdetect.detect(post['post']['content']) == 'de'
+        assert langdetect.detect(post['post']['subject']) == 'de'
+
+    req_post = await hoyolab.request_post(session, 2, 4326670, 'es-ES')
+
+    validate_api_response(req_post)
+    assert langdetect.detect(req_post['post']['content']) == 'es'
+    assert langdetect.detect(req_post['post']['subject']) == 'es'
 
 
 async def test_file_io(json_path, atom_path):
