@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from configparser import ConfigParser
@@ -7,14 +8,28 @@ from os.path import exists
 from os.path import join
 
 import aiofiles
-import aiohttp
 import atoma
 import pytest
+from aiohttp import ClientSession
 
 import hoyolab
 
 
 # -- FIXTURES -- #
+@pytest.fixture(scope='session')
+def event_loop():
+    el = asyncio.get_event_loop()
+    yield el
+    el.close()
+
+
+@pytest.fixture(scope='session')
+async def session(event_loop):
+    cs = ClientSession(loop=event_loop, raise_for_status=True)
+    yield cs
+    await cs.close()
+
+
 @pytest.fixture(params=[1, 2, 4, 6], ids=['honkai', 'genshin', 'tearsofthemis', 'starrail'])
 def game_id(request):
     return request.param
@@ -23,13 +38,6 @@ def game_id(request):
 @pytest.fixture(params=[1, 2, 3], ids=['notices', 'events', 'info'])
 def category_id(request):
     return request.param
-
-
-@pytest.fixture
-async def session(loop):
-    cs = aiohttp.ClientSession(loop=loop, raise_for_status=True)
-    yield cs
-    await cs.close()
 
 
 @pytest.fixture
@@ -43,8 +51,8 @@ def atom_path(tmpdir):
 
 
 @pytest.fixture
-def config_path(tmpdir):
-    conf_file = join(tmpdir, 'myfeed.conf')
+def feed_config(tmpdir):
+    conf_file = join(tmpdir, 'my-feeds.conf')
 
     conf_parser = ConfigParser()
     conf_parser.add_section('genshin')
@@ -61,7 +69,7 @@ def config_path(tmpdir):
 
     environ['HOYOLAB_CONFIG_PATH'] = conf_file
 
-    return conf_file
+    return conf_parser
 
 
 # -- FEED LOGIC TESTS -- #
@@ -206,20 +214,22 @@ async def test_feed(session, json_path, atom_path, game_id):
     validate_atom_feed(atom_feed, game_id, feed_title, feed_author, feed_icon, atom_url, num_entries*3)
 
 
-async def test_config(loop, config_path):
-    await hoyolab.create_game_feeds_from_config(event_loop=loop)
+async def test_config(event_loop, feed_config):
+    # reading config path from env var
+    await hoyolab.create_game_feeds_from_config(event_loop=event_loop)
 
-    async with aiofiles.open(config_path, 'r') as fd:
-        conf_str = await fd.read()
-
-    conf_parser = ConfigParser()
-    conf_parser.read_string(conf_str, config_path)
-
-    for game in conf_parser.sections():
-        conf_game = conf_parser[game]
-
+    for game in feed_config.sections():
+        conf_game = feed_config[game]
         assert exists(conf_game.get('json_path'))
         assert exists(conf_game.get('atom_path'))
+
+    environ['HOYOLAB_CONFIG_PATH'] = '/i-dont-exist.conf'
+    with pytest.raises(hoyolab.HoyolabError):
+        await hoyolab.create_game_feeds_from_config(event_loop=event_loop)
+
+    empty_config = ConfigParser()
+    with pytest.raises(hoyolab.HoyolabError):
+        await hoyolab.create_game_feeds_from_config(config=empty_config, event_loop=event_loop)
 
 
 # -- HELPER / VALIDATE FUNCTIONS -- #

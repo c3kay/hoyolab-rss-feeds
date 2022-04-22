@@ -340,16 +340,23 @@ async def create_game_feeds(session, game_id, json_path, atom_path, json_url, at
         )
 
 
-async def create_game_feeds_from_config(config_path=None, event_loop=None):
-    path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf') if config_path is None else config_path
+async def create_game_feeds_from_config(config=None, event_loop=None):
+    # read config from file
+    if config is None:
+        path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf')
+        try:
+            async with open(path, 'r') as fd:
+                conf_str = await fd.read()
+        except IOError as err:
+            raise HoyolabError('Could not open config file at "{}"'.format(path)) from err
 
-    async with open(path, 'r') as fd:
-        conf_str = await fd.read()
+        conf_parser = ConfigParser()
+        conf_parser.read_string(conf_str)
+    # use param config parser
+    else:
+        conf_parser = config
 
-    conf_parser = ConfigParser()
-    conf_parser.read_string(conf_str)
     games = conf_parser.sections()
-
     if len(games) == 0:
         raise HoyolabError('No feeds configured!')
 
