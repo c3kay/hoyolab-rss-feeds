@@ -169,7 +169,6 @@ async def test_request_news(session, game_id, category_id):
 
 
 async def test_request_post(session, game_id):
-    # existing posts for games
     post_ids = {
         1: 4361615,
         2: 4326670,
@@ -240,7 +239,6 @@ async def test_feed(session, json_path, atom_path, game_id):
         num_entries
     )
 
-    # json feed
     assert exists(json_path)
 
     async with aiofiles.open(json_path, 'r') as fd:
@@ -249,7 +247,6 @@ async def test_feed(session, json_path, atom_path, game_id):
     json_feed = atoma.parse_json_feed(json.loads(feed_str))
     validate_json_feed(json_feed, game_id, feed_title, feed_icon, json_url, num_entries*3)
 
-    # atom feed
     assert exists(atom_path)
 
     async with aiofiles.open(atom_path, 'rb') as fd:
@@ -260,7 +257,6 @@ async def test_feed(session, json_path, atom_path, game_id):
 
 
 async def test_config(event_loop, feed_config):
-    # reading config path from env var
     await hoyolab.create_game_feeds_from_config(event_loop=event_loop)
 
     for game in feed_config.sections():
