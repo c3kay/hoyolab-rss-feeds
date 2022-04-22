@@ -1,4 +1,5 @@
-name: Test
+name: Main
+
 on:
   push:
     paths: ['**.py']
@@ -22,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      - name: Linting with flake8
+      - name: Lint with flake8
         run: |
           flake8 . --count --statistics --max-line-length=120 --select=E9,F63,F7,F82 --show-source
           flake8 . --count --statistics --max-line-length=120 --ignore F40,F811 --exit-zero
@@ -44,7 +45,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      - name: Testing with pytest
+      - name: Test with pytest
         run: pytest --cov=./ --cov-report=xml --asyncio-mode=auto
 
       - name: Uploading coverage to codecov
@@ -65,4 +66,22 @@ jobs:
           body_path: 'CHANGELOG.md'
           fail_on_unmatched_files: true
           generate_release_notes: true
+  deploy:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: c3kay-server
+      url: https://c3kay.de/hoyolab-rss-feeds
+    steps:
+      - uses: actions/checkout@v2
 
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@main
+        env:
+          REMOTE_HOST: ${{ secrets.HOST }}
+          REMOTE_USER: ${{ secrets.USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          TARGET: ${{ secrets.TARGET }}
+          SOURCE: "hoyolab.py"
+          ARGS: "-auvz"
