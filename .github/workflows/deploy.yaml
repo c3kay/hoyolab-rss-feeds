@@ -7,7 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: c3kay-server
+    environment:
+      name: c3kay-server
+      url: https://c3kay.de/hoyolab-rss-feeds
     steps:
       - uses: actions/checkout@v2
 
