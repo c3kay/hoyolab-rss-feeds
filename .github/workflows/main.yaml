@@ -27,11 +27,12 @@ jobs:
         run: |
           flake8 . --count --statistics --max-line-length=120 --select=E9,F63,F7,F82 --show-source
           flake8 . --count --statistics --max-line-length=120 --ignore F40,F811 --exit-zero
+
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: [3.8, 3.9, 3.10]
     steps:
       - uses: actions/checkout@v2
 
@@ -52,6 +53,7 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           flags: python-${{ matrix.python-version }}
+
   release:
     needs: [test, lint]
     if: startsWith(github.ref, 'refs/tags/v')
@@ -59,16 +61,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Create distribution archive
+        run: zip dist-${{ github.ref_name }}.zip hoyolab.py requirements.txt example.conf
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          files: 'hoyolab.py'
-          body_path: 'CHANGELOG.md'
+          files: dist-${{ github.ref_name }}.zip
+          body_path: CHANGELOG.md
           fail_on_unmatched_files: true
           generate_release_notes: true
+
   deploy:
     needs: release
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment:
       name: c3kay-server
@@ -76,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Deploy to Server
+      - name: Deploy to server
         uses: easingthemes/ssh-deploy@main
         env:
           REMOTE_HOST: ${{ secrets.HOST }}
