@@ -21,7 +21,7 @@ After downloading, you could create a virtual environment and activate it with:
 
 ```sh
 python3 -m venv venv
-source venv/bin/active
+source venv/bin/activate
 ```
 
 Install the dependencies with:
