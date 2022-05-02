@@ -20,14 +20,14 @@ the script, the requirements file and the example config.
 After downloading, you could create a virtual environment and activate it with:
 
 ```sh
-$ python3 -m venv venv
-$ source venv/bin/active
+python3 -m venv venv
+source venv/bin/active
 ```
 
 Install the dependencies with:
 
 ```sh
-$ pip3 install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### Usage
