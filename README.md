@@ -1,6 +1,6 @@
 # Hoyolab RSS Feeds
 
-![Build Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Main?style=flat)
+![Tests Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Main?style=flat&label=tests)
 ![Deploy Status](https://img.shields.io/github/deployments/c3kay/hoyolab-rss-feeds/c3kay-server?label=deploy)
 ![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master?style=flat)
 
