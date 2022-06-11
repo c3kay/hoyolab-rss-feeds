@@ -31,7 +31,7 @@ async def session(event_loop):
     await cs.close()
 
 
-@pytest.fixture(params=[1, 2, 4, 6], ids=['honkai', 'genshin', 'tearsofthemis', 'starrail'])
+@pytest.fixture(params=[1, 2, 4, 6, 8], ids=['honkai', 'genshin', 'themis', 'starrail', 'zenless'])
 def game_id(request):
     return request.param
 
@@ -78,8 +78,9 @@ def feed_config(tmpdir):
 def test_game_id_mapping():
     assert hoyolab.get_game_id('honkai') == 1
     assert hoyolab.get_game_id('genshin') == 2
-    assert hoyolab.get_game_id('TearsOfThemis') == 4
+    assert hoyolab.get_game_id('Themis') == 4
     assert hoyolab.get_game_id('starRail') == 6
+    assert hoyolab.get_game_id('zEnlEss') == 8
 
     with pytest.raises(hoyolab.HoyolabError):
         hoyolab.get_game_id('minecraft')
@@ -173,7 +174,8 @@ async def test_request_post(session, game_id):
         1: 4361615,
         2: 4326670,
         4: 4283335,
-        6: 3746616
+        6: 3746616,
+        8: 4729212
     }
 
     req = await hoyolab.request_post(session, game_id, post_ids[game_id])

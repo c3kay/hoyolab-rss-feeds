@@ -1,4 +1,4 @@
 ## Changelog
 
-- Switched to aiohttp and aiofiles for async requests and IO
-- Expanded and improved testing
+- Renamed game config section `tearsofthemis` to only `themis`.
+- Added "Zenless Zone Zero" feed. Use `zenless` for config section.

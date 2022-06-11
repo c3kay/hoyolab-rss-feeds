@@ -32,12 +32,13 @@ def get_category_name(category_id):
 
 
 def get_game_id(game_name):
-    # 3 = unused ; 5 = hoyolab internal news
+    # 3 = unused ; 5 = hoyolab internal news ; 7 = unused
     games = {
         'honkai': 1,
         'genshin': 2,
-        'tearsofthemis': 4,
-        'starrail': 6
+        'themis': 4,
+        'starrail': 6,
+        'zenless': 8
     }
 
     game_name = game_name.lower()
