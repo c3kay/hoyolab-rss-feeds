@@ -17,6 +17,7 @@ import hoyolab
 
 
 # -- FIXTURES -- #
+
 @pytest.fixture(scope='session')
 def event_loop():
     el = asyncio.get_event_loop()
