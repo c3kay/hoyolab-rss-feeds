@@ -1,8 +1,8 @@
 # Hoyolab RSS Feeds
 
-![Tests Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Main?style=flat&label=tests)
-![Deploy Status](https://img.shields.io/github/deployments/c3kay/hoyolab-rss-feeds/c3kay-server?label=deploy)
-![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master?style=flat)
+[![Tests Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Main/master?style=flat&label=tests)](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/main.yaml)
+[![Deploy Status](https://img.shields.io/github/deployments/c3kay/hoyolab-rss-feeds/c3kay-server?label=deploy)](https://github.com/c3kay/hoyolab-rss-feeds/deployments)
+[![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master?style=flat)](https://app.codecov.io/gh/c3kay/hoyolab-rss-feeds)
 
 This script creates [JSON Feeds](https://jsonfeed.org) and [Atom Feeds](https://datatracker.ietf.org/doc/html/rfc4287)
 for Hoyoverse games like [Genshin Impact](https://genshin.hoyoverse.com/en/home) or
@@ -17,7 +17,7 @@ You can download the latest distribution zip-archive on the
 [release page](https://github.com/c3kay/hoyolab-rss-feeds/releases) of this repository. This archive contains
 the script, the requirements file and the example config.
 
-After downloading, you could create a virtual environment and activate it with:
+After downloading, you can create a virtual environment and activate it with:
 
 ```sh
 python3 -m venv venv
