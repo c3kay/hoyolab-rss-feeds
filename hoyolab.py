@@ -7,7 +7,7 @@ from os.path import exists
 from xml.dom import minidom
 
 import aiohttp
-from aiofiles import open
+import aiofiles
 
 
 # -- CUSTOM ERROR CLASS -- #
@@ -133,7 +133,7 @@ async def create_json_feed_file(game_id, path, url, icon, lang, title, author, i
     }
 
     try:
-        async with open(path, 'w', encoding='utf-8') as fd:
+        async with aiofiles.open(path, 'w', encoding='utf-8') as fd:
             feed_json = json.dumps(feed)
             await fd.write(feed_json)
     except IOError as err:
@@ -142,7 +142,7 @@ async def create_json_feed_file(game_id, path, url, icon, lang, title, author, i
 
 async def load_json_feed_items(path):
     try:
-        async with open(path, 'r', encoding='utf-8') as fd:
+        async with aiofiles.open(path, 'r', encoding='utf-8') as fd:
             feed_json = await fd.read()
             feed = json.loads(feed_json)
 
@@ -212,7 +212,7 @@ async def create_atom_feed_file(game_id, path, url, icon, lang, title, author, j
         root.appendChild(entry)
 
     try:
-        async with open(path, 'w', encoding='utf-8') as fd:
+        async with aiofiles.open(path, 'w', encoding='utf-8') as fd:
             xml_feed = doc.toxml(encoding='utf-8')
             await fd.write(xml_feed.decode())
     except IOError as err:
@@ -346,7 +346,7 @@ async def create_game_feeds_from_config(config=None, event_loop=None):
     if config is None:
         path = getenv('HOYOLAB_CONFIG_PATH', 'feeds.conf')
         try:
-            async with open(path, 'r') as fd:
+            async with aiofiles.open(path, 'r') as fd:
                 conf_str = await fd.read()
         except IOError as err:
             raise HoyolabError('Could not open config file at "{}"'.format(path)) from err
