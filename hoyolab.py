@@ -26,7 +26,7 @@ def get_category_name(category_id):
     }
 
     if category_id not in categories:
-        raise HoyolabError('Unknown category ID {}'.format(category_id))
+        raise HoyolabError('Unknown category ID ({})!'.format(category_id))
 
     return categories[category_id]
 
@@ -44,7 +44,7 @@ def get_game_id(game_name):
     game_name = game_name.lower()
 
     if game_name not in games:
-        raise HoyolabError('Unknown game "{}"'.format(game_name))
+        raise HoyolabError('Unknown game "{}"!'.format(game_name))
 
     return games[game_name]
 
@@ -80,7 +80,7 @@ async def request_news(session, game_id, category, num_entries, lang='en-us'):
     except aiohttp.ClientError as err:
         raise HoyolabError('Could not request news!') from err
     except json.JSONDecodeError as err:
-        raise HoyolabError('Could not parse json response!') from err
+        raise HoyolabError('Could not decode JSON response!') from err
     except KeyError as err:
         raise HoyolabError('Unexpected response!') from err
 
@@ -113,7 +113,7 @@ async def request_post(session, game_id, post_id, lang='en-us'):
     except aiohttp.ClientError as err:
         raise HoyolabError('Could not request news!') from err
     except json.JSONDecodeError as err:
-        raise HoyolabError('Could not parse json response!') from err
+        raise HoyolabError('Could not decode JSON response!') from err
     except KeyError as err:
         raise HoyolabError('Unexpected response!') from err
 
@@ -137,10 +137,14 @@ async def create_json_feed_file(game_id, path, url, icon, lang, title, author, i
             feed_json = json.dumps(feed)
             await fd.write(feed_json)
     except IOError as err:
-        raise HoyolabError('Could not write json file to {}!'.format(path)) from err
+        raise HoyolabError('Could not write JSON file to "{}"!'.format(path)) from err
 
 
 async def load_json_feed_items(path):
+    if not exists(path):
+        # create empty feed dict
+        return {category_id: [] for category_id in range(1, 4)}
+
     try:
         async with aiofiles.open(path, 'r', encoding='utf-8') as fd:
             feed_json = await fd.read()
@@ -153,9 +157,10 @@ async def load_json_feed_items(path):
                                                         feed['items']))
 
         return feed_by_category
-    except IOError:
-        # file not found -> create new feed list
-        return {category_id: [] for category_id in range(1, 4)}
+    except IOError as err:
+        raise HoyolabError('Could not read JSON file from "{}"!'.format(path)) from err
+    except json.JSONDecodeError as err:
+        raise HoyolabError('Could not decode JSON file!') from err
 
 
 def create_json_feed_item(post):
@@ -213,10 +218,9 @@ async def create_atom_feed_file(game_id, path, url, icon, lang, title, author, j
 
     try:
         async with aiofiles.open(path, 'w', encoding='utf-8') as fd:
-            xml_feed = doc.toxml(encoding='utf-8')
-            await fd.write(xml_feed.decode())
+            await fd.write(doc.toxml())
     except IOError as err:
-        raise HoyolabError('Could not write atom file to "{}"!'.format(path)) from err
+        raise HoyolabError('Could not write Atom file to "{}"!'.format(path)) from err
 
 
 def create_atom_entry_from_json_item(doc, json_item):
