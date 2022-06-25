@@ -185,6 +185,8 @@ async def test_request_post(session, game_id):
 
 
 async def test_language(session):
+    # NOTE: not checking subject/title because it is often too short to be detected correctly
+
     # apparently needed to get constant results
     langdetect.DetectorFactory.seed = 42
 
@@ -193,13 +195,11 @@ async def test_language(session):
     for post in req_news:
         validate_api_response(post)
         assert langdetect.detect(post['post']['content']) == 'de'
-        assert langdetect.detect(post['post']['subject']) == 'de'
 
     req_post = await hoyolab.request_post(session, 2, 4326670, 'es-ES')
 
     validate_api_response(req_post)
     assert langdetect.detect(req_post['post']['content']) == 'es'
-    assert langdetect.detect(req_post['post']['subject']) == 'es'
 
 
 async def test_file_io(json_path, atom_path):
@@ -308,7 +308,7 @@ def validate_json_feed(json_feed, gid, title, icon, url, max_entries):
             assert modified_ts >= published_ts
 
         if item.image is not None:
-            assert re.fullmatch(r'https://.+\.(jp(e)?g|png)', item.image)
+            assert re.fullmatch(r'https://.+\.(jp(e)?g|png)', item.image, flags=re.IGNORECASE) is not None
 
 
 def validate_atom_feed(atom_feed, gid, title, author, icon, url, max_entries):
