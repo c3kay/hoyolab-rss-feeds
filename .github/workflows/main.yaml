@@ -29,10 +29,11 @@ jobs:
           flake8 . --count --statistics --max-line-length=120 --ignore F40,F811 --exit-zero
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
+        os: ['ubuntu-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v2
 
@@ -52,7 +53,7 @@ jobs:
       - name: Uploading coverage to codecov
         uses: codecov/codecov-action@v2
         with:
-          flags: python-${{ matrix.python-version }}
+          flags: python-${{ matrix.python-version }}-${{ matrix.os }}
 
   release:
     needs: [test, lint]
