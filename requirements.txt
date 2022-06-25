@@ -1,4 +1,2 @@
 aiohttp~=3.8.1
 aiofiles~=0.8.0
-cchardet~=2.1.7
-aiodns~=3.0.0
