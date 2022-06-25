@@ -6,6 +6,7 @@ from datetime import datetime
 from os import environ
 from os.path import exists
 from os.path import join
+from platform import system
 
 import aiofiles
 import atoma
@@ -20,6 +21,10 @@ import hoyolab
 
 @pytest.fixture(scope='session')
 def event_loop():
+    if system() == 'Windows':
+        # default proactor policy not working on windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     el = asyncio.get_event_loop()
     yield el
     el.close()
@@ -213,7 +218,8 @@ async def test_file_io(json_path, atom_path):
     assert await hoyolab.load_json_feed_items('/i-dont-exist.json') == {1: [], 2: [], 3: []}
 
     with pytest.raises(hoyolab.HoyolabError):
-        await hoyolab.create_json_feed_file(1, '/i-dont-exist.json', '', '', '', '', '', [])
+        error_file = 'c:/i-dont-exist.json' if system() == 'Windows' else '/i-dont-exist.json'
+        await hoyolab.create_json_feed_file(1, error_file, '', '', '', '', '', [])
 
     with pytest.raises(hoyolab.HoyolabError):
         await hoyolab.create_atom_feed_file(1, '/i-dont-exist.xml', '', '', '', '', '', [])
