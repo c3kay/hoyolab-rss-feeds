@@ -4,10 +4,11 @@ from configparser import ConfigParser
 from datetime import datetime
 from os import getenv
 from os.path import exists
+from platform import system
 from xml.dom import minidom
 
-import aiohttp
 import aiofiles
+import aiohttp
 
 
 # -- CUSTOM ERROR CLASS -- #
@@ -390,4 +391,8 @@ async def create_game_feeds_from_config(config=None, event_loop=None):
 
 
 if __name__ == '__main__':
+    if system() == 'Windows':
+        # default proactor policy not working on windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     asyncio.run(create_game_feeds_from_config())
