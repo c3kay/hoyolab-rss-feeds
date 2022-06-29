@@ -3,16 +3,19 @@ import json
 import re
 from configparser import ConfigParser
 from datetime import datetime
+from os import chmod
 from os import environ
 from os.path import exists
 from os.path import join
 from platform import system
+from stat import S_IWRITE
 
 import aiofiles
 import atoma
 import langdetect
 import pytest
 from aiohttp import ClientSession
+from aioresponses import aioresponses
 
 import hoyolab
 
@@ -21,20 +24,23 @@ import hoyolab
 
 @pytest.fixture(scope='session')
 def event_loop():
-    if system() == 'Windows':
+    if system() == 'Windows':  # pragma: no cover
         # default proactor policy not working on windows
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    el = asyncio.get_event_loop()
-    yield el
-    el.close()
+    return asyncio.get_event_loop()
 
 
 @pytest.fixture(scope='session')
 async def session(event_loop):
-    cs = ClientSession(loop=event_loop, raise_for_status=True)
-    yield cs
-    await cs.close()
+    async with ClientSession(loop=event_loop, raise_for_status=True) as cs:
+        yield cs
+
+
+@pytest.fixture
+def mocked():
+    with aioresponses() as m:
+        yield m
 
 
 @pytest.fixture(params=[1, 2, 4, 6, 8], ids=['honkai', 'genshin', 'themis', 'starrail', 'zenless'])
@@ -189,6 +195,73 @@ async def test_request_post(session, game_id):
     validate_api_response(req)
 
 
+def test_request_errors(session, mocked, event_loop):
+    url = re.compile(r'https://bbs-api-os\.hoyolab\.com/community/post/wapi/.+')
+
+    # preparing responses
+    for _ in range(2):
+        mocked.get(url, status=500)
+        mocked.get(url, body='Not JSON')
+        mocked.get(url, payload={})
+        mocked.get(url, payload={'retcode': 1, 'message': 'Hoyolab internal error!'})
+
+    # post requests
+
+    with pytest.raises(hoyolab.HoyolabError, match='Could not request news!'):
+        event_loop.run_until_complete(hoyolab.request_post(session, 1, 1))
+
+    with pytest.raises(hoyolab.HoyolabError, match='Could not decode JSON response!'):
+        event_loop.run_until_complete(hoyolab.request_post(session, 1, 1))
+
+    with pytest.raises(hoyolab.HoyolabError, match='Unexpected response!'):
+        event_loop.run_until_complete(hoyolab.request_post(session, 1, 1))
+
+    with pytest.raises(hoyolab.HoyolabError, match='Hoyolab internal error!'):
+        event_loop.run_until_complete(hoyolab.request_post(session, 1, 1))
+
+    # news requests
+
+    with pytest.raises(hoyolab.HoyolabError, match='Could not request news!'):
+        event_loop.run_until_complete(hoyolab.request_news(session, 1, 1, 1))
+
+    with pytest.raises(hoyolab.HoyolabError, match='Could not decode JSON response!'):
+        event_loop.run_until_complete(hoyolab.request_news(session, 1, 1, 1))
+
+    with pytest.raises(hoyolab.HoyolabError, match='Unexpected response!'):
+        event_loop.run_until_complete(hoyolab.request_news(session, 1, 1, 1))
+
+    with pytest.raises(hoyolab.HoyolabError, match='Hoyolab internal error!'):
+        event_loop.run_until_complete(hoyolab.request_news(session, 1, 1, 1))
+
+
+async def test_file_io_errors(json_path):
+    # file does not exist -> create new empty feed object
+    assert await hoyolab.load_json_feed_items('/i-dont-exist.json') == {1: [], 2: [], 3: []}
+
+    # invalid json file
+    async with aiofiles.open(json_path, 'w') as fd:
+        await fd.write('Not JSON')
+
+    with pytest.raises(hoyolab.HoyolabError, match='Could not decode JSON file!'):
+        await hoyolab.load_json_feed_items(json_path)
+
+    # file not readable (permission error)
+    chmod(json_path, S_IWRITE)
+
+    with pytest.raises(hoyolab.HoyolabError, match=r'Could not read JSON file from .+'):
+        await hoyolab.load_json_feed_items(json_path)
+
+    # json file not writable
+    with pytest.raises(hoyolab.HoyolabError):
+        not_json_file = 'f:/i-dont-exist.json' if system() == 'Windows' else '/i-dont-exist.json'
+        await hoyolab.create_json_feed_file(1, not_json_file, '', '', '', '', '', [])
+
+    # atom file not writable
+    with pytest.raises(hoyolab.HoyolabError):
+        not_atom_file = 'f:/i-dont-exist.xml' if system() == 'Windows' else '/i-dont-exist.xml'
+        await hoyolab.create_atom_feed_file(1, not_atom_file, '', '', '', '', '', [])
+
+
 async def test_language(session):
     # NOTE: not checking subject/title because it is often too short to be detected correctly
 
@@ -205,25 +278,6 @@ async def test_language(session):
 
     validate_api_response(req_post)
     assert langdetect.detect(req_post['post']['content']) == 'es'
-
-
-async def test_file_io(json_path, atom_path):
-    await hoyolab.create_json_feed_file(1, json_path, '-', '-', '-', '-', '-', [])
-    await hoyolab.create_atom_feed_file(1, atom_path, '-', '-', '-', '-', '-', [])
-
-    assert exists(json_path)
-    assert exists(atom_path)
-
-    assert await hoyolab.load_json_feed_items(json_path) == {1: [], 2: [], 3: []}
-    assert await hoyolab.load_json_feed_items('/i-dont-exist.json') == {1: [], 2: [], 3: []}
-
-    with pytest.raises(hoyolab.HoyolabError):
-        error_file = 'f:/i-dont-exist.json' if system() == 'Windows' else '/i-dont-exist.json'
-        await hoyolab.create_json_feed_file(1, error_file, '', '', '', '', '', [])
-
-    with pytest.raises(hoyolab.HoyolabError):
-        error_file = 'f:/i-dont-exist.xml' if system() == 'Windows' else '/i-dont-exist.xml'
-        await hoyolab.create_atom_feed_file(1, error_file, '', '', '', '', '', [])
 
 
 # -- FEED TESTS -- #
@@ -275,10 +329,12 @@ async def test_config(event_loop, feed_config):
         assert exists(conf_game.get('atom_path'))
 
     environ['HOYOLAB_CONFIG_PATH'] = 'f:/i-dont-exist.conf' if system() == 'Windows' else '/i-dont-exist.conf'
+
     with pytest.raises(hoyolab.HoyolabError):
         await hoyolab.create_game_feeds_from_config(event_loop=event_loop)
 
     empty_config = ConfigParser()
+
     with pytest.raises(hoyolab.HoyolabError):
         await hoyolab.create_game_feeds_from_config(config=empty_config, event_loop=event_loop)
 
@@ -309,12 +365,12 @@ def validate_json_feed(json_feed, gid, title, icon, url, max_entries):
         assert published_ts <= prev_published_ts
         prev_published_ts = published_ts
 
-        if item.date_modified is not None:
+        if item.date_modified is not None:  # pragma: no cover
             modified_ts = item.date_modified.timestamp()
             assert modified_ts > 0
             assert modified_ts >= published_ts
 
-        if item.image is not None:
+        if item.image is not None:  # pragma: no cover
             assert re.fullmatch(r'https://.+\.(jp(e)?g|png)', item.image, flags=re.IGNORECASE) is not None
 
 
@@ -329,7 +385,7 @@ def validate_atom_feed(atom_feed, gid, title, author, icon, url, max_entries):
             assert link.href == url
         elif link.rel == 'alternate':
             assert link.href == 'https://www.hoyolab.com/official/{}'.format(gid)
-        else:
+        else:  # pragma: no cover
             raise ValueError('Unknown link relation {}'.format(link.rel))
 
     assert len(atom_feed.entries) > 0

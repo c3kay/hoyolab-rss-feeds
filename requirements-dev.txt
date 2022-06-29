@@ -6,5 +6,4 @@ langdetect~=1.0.9
 atoma~=0.0.17
 aiohttp~=3.8.1
 aiofiles~=0.8.0
-cchardet~=2.1.7
-aiodns~=3.0.0
+aioresponses~=0.7.3

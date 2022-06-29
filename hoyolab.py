@@ -390,7 +390,7 @@ async def create_game_feeds_from_config(config=None, event_loop=None):
         )
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     if system() == 'Windows':
         # default proactor policy not working on windows
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
