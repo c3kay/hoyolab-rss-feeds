@@ -235,8 +235,11 @@ def test_request_errors(session, mocked, event_loop):
 
 
 async def test_file_io_errors(json_path):
+    not_json_file = 'f:/i-dont-exist.json' if system() == 'Windows' else '/i-dont-exist.json'
+    not_atom_file = 'f:/i-dont-exist.xml' if system() == 'Windows' else '/i-dont-exist.xml'
+
     # file does not exist -> create new empty feed object
-    assert await hoyolab.load_json_feed_items('/i-dont-exist.json') == {1: [], 2: [], 3: []}
+    assert await hoyolab.load_json_feed_items(not_json_file) == {1: [], 2: [], 3: []}
 
     # invalid json file
     async with aiofiles.open(json_path, 'w') as fd:
@@ -245,20 +248,20 @@ async def test_file_io_errors(json_path):
     with pytest.raises(hoyolab.HoyolabError, match='Could not decode JSON file!'):
         await hoyolab.load_json_feed_items(json_path)
 
-    # file not readable (permission error)
-    chmod(json_path, S_IWRITE)
+    # TODO: find operation that throws IOError (other than file missing) on windows
+    if system() != 'Windows':  # pragma: no cover
+        # not working as intended on windows
+        chmod(json_path, S_IWRITE)
 
-    with pytest.raises(hoyolab.HoyolabError, match=r'Could not read JSON file from .+'):
-        await hoyolab.load_json_feed_items(json_path)
+        with pytest.raises(hoyolab.HoyolabError, match=r'Could not read JSON file from .+'):
+            await hoyolab.load_json_feed_items(json_path)
 
     # json file not writable
     with pytest.raises(hoyolab.HoyolabError):
-        not_json_file = 'f:/i-dont-exist.json' if system() == 'Windows' else '/i-dont-exist.json'
         await hoyolab.create_json_feed_file(1, not_json_file, '', '', '', '', '', [])
 
     # atom file not writable
     with pytest.raises(hoyolab.HoyolabError):
-        not_atom_file = 'f:/i-dont-exist.xml' if system() == 'Windows' else '/i-dont-exist.xml'
         await hoyolab.create_atom_feed_file(1, not_atom_file, '', '', '', '', '', [])
 
 
