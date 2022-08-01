@@ -331,14 +331,24 @@ async def test_config(event_loop, feed_config):
         assert exists(conf_game.get('json_path'))
         assert exists(conf_game.get('atom_path'))
 
+    duplicate_json_path = feed_config.get(feed_config.sections()[0], 'json_path')
+    duplicate_atom_path = feed_config.get(feed_config.sections()[0], 'atom_path')
+
+    feed_config.add_section('zenless')
+    feed_config.set('zenless', 'json_path', duplicate_json_path)
+    feed_config.set('zenless', 'atom_path', duplicate_atom_path)
+
+    with pytest.raises(hoyolab.HoyolabError, match='Config contains identical paths for different sections!'):
+        await hoyolab.create_game_feeds_from_config(config=feed_config, event_loop=event_loop)
+
     environ['HOYOLAB_CONFIG_PATH'] = 'f:/i-dont-exist.conf' if system() == 'Windows' else '/i-dont-exist.conf'
 
-    with pytest.raises(hoyolab.HoyolabError):
+    with pytest.raises(hoyolab.HoyolabError, match=r'Could not open config file at .+'):
         await hoyolab.create_game_feeds_from_config(event_loop=event_loop)
 
     empty_config = ConfigParser()
 
-    with pytest.raises(hoyolab.HoyolabError):
+    with pytest.raises(hoyolab.HoyolabError, match='No feeds configured!'):
         await hoyolab.create_game_feeds_from_config(config=empty_config, event_loop=event_loop)
 
 

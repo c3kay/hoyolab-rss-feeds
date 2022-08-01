@@ -368,6 +368,13 @@ async def create_game_feeds_from_config(config=None, event_loop=None):
 
     game_configs = [(get_game_id(game), conf_parser[game]) for game in games]
 
+    json_paths = [conf.get('json_path') for _, conf in game_configs]
+    atom_paths = [conf.get('atom_path') for _, conf in game_configs]
+
+    if len(json_paths) != len(set(json_paths)) or len(atom_paths) != len(set(atom_paths)):
+        # feeds are created non-thread-safe, so this would create unwanted behavior
+        raise HoyolabError('Config contains identical paths for different sections!')
+
     async with aiohttp.ClientSession(loop=event_loop) as session:
         # concurrently create game feeds
         await asyncio.gather(
@@ -375,10 +382,10 @@ async def create_game_feeds_from_config(config=None, event_loop=None):
                 create_game_feeds(
                     session,
                     game_id,
-                    conf.get('json_path', 'feed.json'),
-                    conf.get('atom_path', 'feed.xml'),
-                    conf.get('json_url', 'feed.json'),
-                    conf.get('atom_url', 'feed.xml'),
+                    conf.get('json_path', '{}.json'.format(conf.name)),
+                    conf.get('atom_path', '{}.xml'.format(conf.name)),
+                    conf.get('json_url', '{}.json'.format(conf.name)),
+                    conf.get('atom_url', '{}.xml'.format(conf.name)),
                     conf.get('icon', 'https://img-os-static.hoyolab.com/favicon.ico'),
                     conf.get('title', 'Untitled'),
                     conf.get('author', 'Unknown'),
