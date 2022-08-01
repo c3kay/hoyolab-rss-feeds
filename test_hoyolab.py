@@ -38,9 +38,17 @@ async def session(event_loop):
 
 
 @pytest.fixture
-def mocked():
-    with aioresponses() as m:
-        yield m
+def mocked_error_response():
+    with aioresponses() as mocked:
+        url = re.compile(r'https://bbs-api-os\.hoyolab\.com/community/post/wapi/.+')
+
+        # preparing responses
+        mocked.get(url, status=500)
+        mocked.get(url, body='Not JSON')
+        mocked.get(url, payload={})
+        mocked.get(url, payload={'retcode': 1, 'message': 'Hoyolab internal error!'})
+
+        yield
 
 
 @pytest.fixture(params=[1, 2, 4, 6, 8], ids=['honkai', 'genshin', 'themis', 'starrail', 'zenless'])
@@ -169,7 +177,25 @@ def test_latest_post_ids():
     assert hoyolab.get_latest_post_ids(posts) == expected
 
 
-# -- API & IO TESTS -- #
+async def test_language(session):
+    # NOTE: not checking subject/title because it is often too short to be detected correctly
+
+    # apparently needed to get constant results
+    langdetect.DetectorFactory.seed = 42
+
+    req_news = await hoyolab.request_news(session, 2, 1, 1, 'de-de')
+
+    for post in req_news:
+        validate_api_response(post)
+        assert langdetect.detect(post['post']['content']) == 'de'
+
+    req_post = await hoyolab.request_post(session, 2, 4326670, 'es-ES')
+
+    validate_api_response(req_post)
+    assert langdetect.detect(req_post['post']['content']) == 'es'
+
+
+# -- API REQUEST TESTS -- #
 
 async def test_request_news(session, game_id, category_id):
     req = await hoyolab.request_news(session, game_id, category_id, 3)
@@ -195,18 +221,7 @@ async def test_request_post(session, game_id):
     validate_api_response(req)
 
 
-def test_request_errors(session, mocked, event_loop):
-    url = re.compile(r'https://bbs-api-os\.hoyolab\.com/community/post/wapi/.+')
-
-    # preparing responses
-    for _ in range(2):
-        mocked.get(url, status=500)
-        mocked.get(url, body='Not JSON')
-        mocked.get(url, payload={})
-        mocked.get(url, payload={'retcode': 1, 'message': 'Hoyolab internal error!'})
-
-    # post requests
-
+def test_request_post_errors(session, mocked_error_response, event_loop):
     with pytest.raises(hoyolab.HoyolabError, match='Could not request news!'):
         event_loop.run_until_complete(hoyolab.request_post(session, 1, 1))
 
@@ -219,8 +234,8 @@ def test_request_errors(session, mocked, event_loop):
     with pytest.raises(hoyolab.HoyolabError, match='Hoyolab internal error!'):
         event_loop.run_until_complete(hoyolab.request_post(session, 1, 1))
 
-    # news requests
 
+def test_request_news_errors(session, mocked_error_response, event_loop):
     with pytest.raises(hoyolab.HoyolabError, match='Could not request news!'):
         event_loop.run_until_complete(hoyolab.request_news(session, 1, 1, 1))
 
@@ -233,6 +248,8 @@ def test_request_errors(session, mocked, event_loop):
     with pytest.raises(hoyolab.HoyolabError, match='Hoyolab internal error!'):
         event_loop.run_until_complete(hoyolab.request_news(session, 1, 1, 1))
 
+
+# -- IO TESTS -- #
 
 async def test_file_io_errors(json_path):
     not_json_file = 'f:/i-dont-exist.json' if system() == 'Windows' else '/i-dont-exist.json'
@@ -263,24 +280,6 @@ async def test_file_io_errors(json_path):
     # atom file not writable
     with pytest.raises(hoyolab.HoyolabError):
         await hoyolab.create_atom_feed_file(1, not_atom_file, '', '', '', '', '', [])
-
-
-async def test_language(session):
-    # NOTE: not checking subject/title because it is often too short to be detected correctly
-
-    # apparently needed to get constant results
-    langdetect.DetectorFactory.seed = 42
-
-    req_news = await hoyolab.request_news(session, 2, 1, 1, 'de-de')
-
-    for post in req_news:
-        validate_api_response(post)
-        assert langdetect.detect(post['post']['content']) == 'de'
-
-    req_post = await hoyolab.request_post(session, 2, 4326670, 'es-ES')
-
-    validate_api_response(req_post)
-    assert langdetect.detect(req_post['post']['content']) == 'es'
 
 
 # -- FEED TESTS -- #
@@ -323,6 +322,13 @@ async def test_feed(session, json_path, atom_path, game_id):
     validate_atom_feed(atom_feed, game_id, feed_title, feed_author, feed_icon, atom_url, num_entries*3)
 
 
+async def test_invalid_feed_paths(session, json_path):
+    with pytest.raises(hoyolab.HoyolabError, match='Paths for JSON and Atom feed are identical!'):
+        await hoyolab.create_game_feeds(session, 1, json_path, json_path, '', '', '', '', '')
+
+
+# -- CONFIG TESTS -- #
+
 async def test_config(event_loop, feed_config):
     await hoyolab.create_game_feeds_from_config(event_loop=event_loop)
 
@@ -331,16 +337,8 @@ async def test_config(event_loop, feed_config):
         assert exists(conf_game.get('json_path'))
         assert exists(conf_game.get('atom_path'))
 
-    duplicate_json_path = feed_config.get(feed_config.sections()[0], 'json_path')
-    duplicate_atom_path = feed_config.get(feed_config.sections()[0], 'atom_path')
 
-    feed_config.add_section('zenless')
-    feed_config.set('zenless', 'json_path', duplicate_json_path)
-    feed_config.set('zenless', 'atom_path', duplicate_atom_path)
-
-    with pytest.raises(hoyolab.HoyolabError, match='Config contains identical paths for different sections!'):
-        await hoyolab.create_game_feeds_from_config(config=feed_config, event_loop=event_loop)
-
+async def test_invalid_config(event_loop):
     environ['HOYOLAB_CONFIG_PATH'] = 'f:/i-dont-exist.conf' if system() == 'Windows' else '/i-dont-exist.conf'
 
     with pytest.raises(hoyolab.HoyolabError, match=r'Could not open config file at .+'):
@@ -350,6 +348,18 @@ async def test_config(event_loop, feed_config):
 
     with pytest.raises(hoyolab.HoyolabError, match='No feeds configured!'):
         await hoyolab.create_game_feeds_from_config(config=empty_config, event_loop=event_loop)
+
+
+async def test_invalid_feed_paths_config(event_loop, feed_config):
+    duplicate_json_path = feed_config.get(feed_config.sections()[0], 'json_path')
+    duplicate_atom_path = feed_config.get(feed_config.sections()[0], 'atom_path')
+
+    feed_config.add_section('zenless')
+    feed_config.set('zenless', 'json_path', duplicate_json_path)
+    feed_config.set('zenless', 'atom_path', duplicate_atom_path)
+
+    with pytest.raises(hoyolab.HoyolabError, match='Config contains identical paths for different sections!'):
+        await hoyolab.create_game_feeds_from_config(config=feed_config, event_loop=event_loop)
 
 
 # -- HELPER / VALIDATE FUNCTIONS -- #

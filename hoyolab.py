@@ -298,6 +298,9 @@ def get_post_id_diff(fetched_ids, known_ids):
 
 async def create_game_feeds(session, game_id, json_path, atom_path, json_url, atom_url, icon, title, author,
                             num_entries=5, lang='en-us'):
+    if json_path == atom_path:
+        raise HoyolabError('Paths for JSON and Atom feed are identical!')
+
     # json feed as reference for known items since it is easier to parse...
     feed_items_by_category = await load_json_feed_items(json_path)
 
