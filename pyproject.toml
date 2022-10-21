@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools >= 65.0.0", "setuptools_scm[toml] >= 7.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hoyolab-rss-feeds"
+authors = [
+    {name = "c3kay", email = "c3kay@icloud.com"}
+]
+description = "RSS feed generator for official game news from Hoyolab."
+readme = "README.md"
+license = {text = "MIT License"}
+requires-python = ">=3.8"
+keywords = [
+    "hoyolab",
+    "rss",
+    "feed",
+    "rss-generator",
+    "jsonfeed",
+    "atom",
+    "genshin-impact",
+    "honkai-impact",
+    "zenless-zone-zero"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary"
+]
+dependencies = [
+    "aiohttp",
+    "aiofiles",
+    "pydantic",
+    "tomli"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "tox",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-datadir",
+    "atoma",
+    "langdetect"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/c3kay/hoyolab-rss-feeds"
+"Issue Tracker" = "https://github.com/c3kay/hoyolab-rss-feeds/issues"
+
+# infer version from git
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+# addopts = "--cov --cov-append --cov-report=xml --cov-report=term-missing"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.coverage.paths]
+# https://coverage.readthedocs.io/en/6.5.0/config.html#paths
+# https://github.com/pytest-dev/pytest-cov/blob/master/examples/src-layout/.coveragerc
+sources = [
+    "src",
+    "*/site-packages"
+]
+
+[tool.coverage.run]
+source = ["hoyolabrssfeeds"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",  # need to re-enable the default
+    "@abstractmethod"
+]
