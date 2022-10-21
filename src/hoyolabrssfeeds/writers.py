@@ -7,6 +7,7 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import TypeVar
+from typing import Type
 from xml.dom import minidom
 
 import aiofiles
@@ -26,11 +27,12 @@ class AbstractFeedFileWriter(metaclass=ABCMeta):
 
     @property
     def config(self) -> FeedFileWriterConfig:
+        """Returns the config of feed writer."""
         return self._config
 
     @abstractmethod
     async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]):
-        """Write feed to file, device etc."""
+        """Write feed to file."""
         pass
 
 
@@ -43,8 +45,8 @@ class FeedFileWriterFactory:
 
     def __init__(self):
         self._writers = {
-            FeedType.JSON: JSONFeedFileWriter,
-            FeedType.ATOM: AtomFeedFileWriter
+            str(FeedType.JSON): JSONFeedFileWriter,
+            str(FeedType.ATOM): AtomFeedFileWriter
         }
 
     @property
@@ -52,13 +54,21 @@ class FeedFileWriterFactory:
         """Set of feed types for which writers are registered."""
         return set(self._writers.keys())
 
+    def register_writer(self, feed_type: str, writer: Type[W]):
+        """Register a feed writer for a new feed type."""
+
+        if feed_type in self._writers:
+            raise ValueError('Feed writer already exists for feed type "{}"!'.format(feed_type))
+
+        self._writers[feed_type] = writer
+
     def create_writer(self, config: FeedFileWriterConfig) -> W:
-        """Create feed writer for the specified feed type."""
+        """Create a feed writer for the specified feed type."""
 
         try:
             writer = self._writers[config.feed_type](config)
         except KeyError as err:
-            raise ValueError('No writer registered for "{}"'.format(config.feed_type)) from err
+            raise ValueError('No writer registered for "{}"!'.format(config.feed_type)) from err
 
         return writer
 
@@ -72,15 +82,15 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
         feed = {
             'version': 'https://jsonfeed.org/version/1.1',
             'title': feed_meta.title or '{} News'.format(feed_meta.game.name.title()),
-            'language': feed_meta.language,
-            'home_page_url': 'https://www.hoyolab.com/official/{}'.format(feed_meta.game),
+            'language': str(feed_meta.language),
+            'home_page_url': 'https://www.hoyolab.com/circles/{}'.format(feed_meta.game),
         }
 
         if self._config.url:
-            feed['feed_url'] = self._config.url
+            feed['feed_url'] = str(self._config.url)
 
         if feed_meta.icon:
-            feed['icon'] = feed_meta.icon
+            feed['icon'] = str(feed_meta.icon)
 
         feed['items'] = [self.create_json_feed_item(item) for item in feed_items]
 
@@ -109,10 +119,10 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
         }
 
         if item.updated:
-            json_item['date_updated'] = item.updated
+            json_item['date_updated'] = item.updated.astimezone().isoformat()
 
         if item.image:
-            json_item['image'] = item.image
+            json_item['image'] = str(item.image)
 
         return json_item
 
@@ -131,12 +141,12 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
 
         # workaround...
         root.setAttribute('xmlns', 'http://www.w3.org/2005/Atom')
-        root.setAttribute('xml:lang', feed_meta.language)
+        root.setAttribute('xml:lang', str(feed_meta.language))
 
         self._append_text_node(root, 'id', 'tag:hoyolab.com,2021:/official/{}'.format(feed_meta.game))
         self._append_text_node(root, 'title', feed_meta.title or '{} News'.format(feed_meta.game.name.title()))
         self._append_text_node(root, 'updated', datetime.now().astimezone().isoformat())
-        self._append_attr_node(root, 'link', {'href': 'https://www.hoyolab.com/official/{}'.format(feed_meta.game),
+        self._append_attr_node(root, 'link', {'href': 'https://www.hoyolab.com/circles/{}'.format(feed_meta.game),
                                               'rel': 'alternate', 'type': 'text/html'})
 
         if self._config.url:

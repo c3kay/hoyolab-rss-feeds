@@ -9,13 +9,11 @@ from typing import Optional
 import aiofiles
 import tomli
 from pydantic import ValidationError
-from pydantic import parse_obj_as
 
 from .errors import ConfigError
 from .models import FeedConfig
 from .models import FeedFileWriterConfig
 from .models import FeedMeta
-from .models import FeedType
 from .models import Game
 
 
@@ -23,7 +21,7 @@ class FeedConfigLoader:
     """TOML file config loader."""
 
     def __init__(self, config_path: Optional[Path] = None):
-        fallback_path = join(expanduser('~'), '.hoyolab-feeds.toml')
+        fallback_path = join(expanduser('~'), '.hoyolab_feeds.toml')
         self._path = config_path or getenv('HRF_CONFIG_PATH', fallback_path)
 
     async def _load_from_file(self) -> Dict:
@@ -50,11 +48,10 @@ class FeedConfigLoader:
 
         try:
             file_config_dict = game_config_dict.pop('file')
-            feed_types = parse_obj_as(List[FeedType], list(file_config_dict.keys()))
 
             writer_configs = [
-                FeedFileWriterConfig(feed_type=feed_type, **(file_config_dict[feed_type]))
-                for feed_type in feed_types
+                FeedFileWriterConfig(feed_type=feed_type, **feed_config)
+                for feed_type, feed_config in file_config_dict.items()
             ]
 
             feed_meta = FeedMeta(game=game, **game_config_dict)
@@ -74,7 +71,7 @@ class FeedConfigLoader:
 
         for key, val in config.items():
             if key not in games and key != 'file':
-                # only set if not already exists
+                # only set key if not already exists
                 game_config_dict.setdefault(key, val)
 
         return game_config_dict
@@ -104,7 +101,7 @@ class FeedConfigLoader:
         for key, config_dict in config.items():
             if key in games:
                 config_dict = self._merge_root(config, config_dict)
-                feed_config = self._create_feed_config(Game[key.upper()], config_dict)
+                feed_config = self._create_feed_config(Game.from_str(key), config_dict)
                 feed_configs.append(feed_config)
 
         return feed_configs

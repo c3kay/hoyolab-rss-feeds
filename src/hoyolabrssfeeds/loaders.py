@@ -4,9 +4,9 @@ from abc import abstractmethod
 from os.path import exists
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Set
 from typing import TypeVar
+from typing import Type
 
 import aiofiles
 from pydantic import parse_obj_as
@@ -14,8 +14,8 @@ from pydantic import parse_obj_as
 from .errors import FeedIOError
 from .models import FeedFileConfig
 from .models import FeedItem
-from .models import FeedMeta
 from .models import FeedType
+from .models import PostCategory
 from .writers import W
 
 
@@ -27,17 +27,12 @@ class AbstractFeedFileLoader(metaclass=ABCMeta):
 
     @property
     def config(self) -> FeedFileConfig:
-        """Path where the feed should be loaded from."""
+        """Returns the config of the feed loader."""
         return self._config
 
     @abstractmethod
     async def get_feed_items(self) -> List[FeedItem]:
-        """Returns the items of the feed or empty list if not available."""
-        pass
-
-    @abstractmethod
-    async def get_feed_meta(self) -> Optional[FeedMeta]:
-        """Returns meta information about the feed or None if not available."""
+        """Get the items of the feed or an empty list if they do not exist."""
         pass
 
 
@@ -45,17 +40,26 @@ L = TypeVar('L', bound=AbstractFeedFileLoader)
 
 
 class FeedFileLoaderFactory:
-    """Factory for creating specific FeedFileWriters."""
+    """Factory for creating specific FeedFileLoaders."""
 
     def __init__(self):
         self._loaders = {
-            FeedType.JSON: JSONFeedFileLoader
+            str(FeedType.JSON): JSONFeedFileLoader
+            # TODO: add atom loader
         }
 
     @property
-    def feed_types(self) -> Set[FeedType]:
+    def feed_types(self) -> Set[str]:
         """Set of feed types for which writers are registered."""
         return set(self._loaders.keys())
+
+    def register_loader(self, feed_type: str, loader: Type[L]):
+        """Register feed loader for a new feed type."""
+
+        if feed_type in self._loaders:
+            raise ValueError('Feed loader already exists for feed type "{}"!'.format(feed_type))
+
+        self._loaders[feed_type] = loader
 
     def create_loader(self, config: FeedFileConfig) -> L:
         """Create feed loader for the specified feed type."""
@@ -84,16 +88,36 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
 
         if exists(self._config.path):
             feed = await self._load_from_file()
-            return parse_obj_as(List[FeedItem], feed['items'])
+            feed_items = []
+
+            try:
+                for item in feed['items']:
+                    category = PostCategory.from_str(item['tags'][0])
+
+                    item_dict = {
+                        'id': item['id'],
+                        'title': item['title'],
+                        'author': item['authors'][0]['name'],
+                        'content': item['content_html'],
+                        'category': category,
+                        'published': item['date_published']
+                    }
+
+                    if 'date_modified' in item:
+                        item_dict['updated'] = item['date_modified']
+
+                    if 'image' in item:
+                        item_dict['image'] = item['image']
+
+                    feed_items.append(item_dict)
+
+                    return parse_obj_as(List[FeedItem], feed_items)
+            except KeyError as err:
+                raise FeedIOError('Could not find required key in JSON feed!') from err
+            except ValueError as err:
+                raise FeedIOError('Found unexpected value in JSON feed!') from err
         else:
             return []
-
-    async def get_feed_meta(self) -> Optional[FeedMeta]:
-        """Return feed meta information of JSON-Feed if feed exists."""
-
-        if exists(self._config.path):
-            feed = await self._load_from_file()
-            return parse_obj_as(FeedMeta, feed)
 
     async def _load_from_file(self) -> Dict:
         """Load JSON-Feed from file."""

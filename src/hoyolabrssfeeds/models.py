@@ -16,6 +16,13 @@ class PostCategory(IntEnum):
     EVENTS = 2
     INFO = 3
 
+    @classmethod
+    def from_str(cls, category_str):
+        try:
+            return cls[category_str.upper()]
+        except KeyError as err:
+            raise ValueError('Unknown category "{}"!'.format(category_str)) from err
+
 
 @unique
 class Game(IntEnum):
@@ -25,6 +32,22 @@ class Game(IntEnum):
     THEMIS = 4
     STARRAIL = 6
     ZENLESS = 8
+
+    @classmethod
+    def from_str(cls, game_str):
+        try:
+            return cls[game_str.upper()]
+        except KeyError as err:
+            raise ValueError('Unknown game "{}"!'.format(game_str)) from err
+
+
+@unique
+class FeedType(str, Enum):
+    JSON = 'json'
+    ATOM = 'atom'
+
+    def __str__(self):
+        return self.value
 
 
 class Language(str, Enum):
@@ -42,11 +65,8 @@ class Language(str, Enum):
     THAI = "th-th"
     VIETNAMESE = "vi-vn"
 
-
-@unique
-class FeedType(str, Enum):
-    JSON = 'json'
-    ATOM = 'atom'
+    def __str__(self):
+        return self.value
 
 
 # --- PYDANTIC MODELS ---
@@ -76,7 +96,7 @@ class FeedItemMeta(BaseModel):
 
 
 class FeedFileConfig(BaseModel):
-    feed_type: FeedType
+    feed_type: str  # this is str and not FeedType to allow self-defined/derived types
     path: Path
 
 

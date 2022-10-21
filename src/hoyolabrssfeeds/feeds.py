@@ -1,10 +1,11 @@
 import asyncio
 from typing import List
 from typing import Optional
+from warnings import warn
 
 import aiohttp
 
-from .errors import FeedIOError
+from .errors import ConfigError
 from .hoyolab import HoyolabNews
 from .loaders import FeedFileLoaderFactory
 from .loaders import L
@@ -23,6 +24,11 @@ class GameFeed:
             feed_writers: List[W],
             feed_loader: L
     ):
+        # warn if identical paths for writers are found
+        writer_paths = [str(writer.config.path) for writer in feed_writers]
+        if len(writer_paths) != len(set(writer_paths)):
+            warn('Writers for {} game feed contain identical paths'.format(feed_meta.game.name.title()))
+
         self._feed_meta = feed_meta
         self._feed_writers = feed_writers
         self._feed_loader = feed_loader
@@ -48,7 +54,7 @@ class GameFeed:
             else:
                 loader = loader_factory.create_any_loader(writers)
         except ValueError as err:
-            raise FeedIOError('Could not create game feed from config!') from err
+            raise ConfigError('Could not create game feed from config!') from err
 
         return cls(feed_config.feed_meta, writers, loader)
 
@@ -77,7 +83,7 @@ class GameFeed:
             # sort feed items descending by id -> latest at the top
             combined_feed.sort(key=lambda item: item.id, reverse=True)
 
-            # write to files
+            # concurrently write to files
             await asyncio.gather(*[
                 writer.write_feed(self._feed_meta, combined_feed)
                 for writer in self._feed_writers
@@ -140,8 +146,8 @@ class GameFeedCollection:
             feed_writers: List[List[W]],
             feed_loaders: List[L]
     ):
-        if not(len(feed_metas) == len(feed_writers) == len(feed_loaders)):
-            raise ValueError('Argument lists do not have equal size!')
+        if not (len(feed_metas) == len(feed_writers) == len(feed_loaders)):
+            raise ValueError('Parameter lists do not have the same length!')
 
         self._game_feeds = [
             GameFeed(meta, writer, loader)
@@ -175,7 +181,7 @@ class GameFeedCollection:
                 else:
                     loaders.append(loader_factory.create_any_loader(writers_configs))
         except ValueError as err:
-            raise FeedIOError('Could not create game feed collection from configs!') from err
+            raise ConfigError('Could not create game feed collection from configs!') from err
 
         return cls(metas, writers, loaders)
 
