@@ -2,7 +2,8 @@
 .pytest_cache
 .tox
 venv
+src/*.egg-info
 
 # coverage files
-.coverage
-coverage.xml
+*/.coverage
+*/coverage.xml
