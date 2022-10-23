@@ -1,23 +1,29 @@
-from enum import IntEnum, unique
+from datetime import datetime
 from enum import Enum
+from enum import IntEnum, unique
+from pathlib import Path
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import TypeVar
+
 from pydantic import BaseModel
 from pydantic import HttpUrl
-from datetime import datetime
-from typing import Optional
-from typing import List
-from pathlib import Path
+
+IC = TypeVar('IC', bound='FeedItemCategory')
+G = TypeVar('G', bound='Game')
 
 
 # --- ENUMS ---
 
 @unique
-class PostCategory(IntEnum):
+class FeedItemCategory(IntEnum):
     NOTICES = 1
     EVENTS = 2
     INFO = 3
 
     @classmethod
-    def from_str(cls, category_str):
+    def from_str(cls: Type[IC], category_str: str) -> IC:
         try:
             return cls[category_str.upper()]
         except KeyError as err:
@@ -34,7 +40,7 @@ class Game(IntEnum):
     ZENLESS = 8
 
     @classmethod
-    def from_str(cls, game_str):
+    def from_str(cls: Type[G], game_str: str) -> G:
         try:
             return cls[game_str.upper()]
         except KeyError as err:
@@ -84,7 +90,7 @@ class FeedItem(BaseModel):
     title: str
     author: str
     content: str
-    category: PostCategory
+    category: FeedItemCategory
     published: datetime
     updated: Optional[datetime] = None
     image: Optional[HttpUrl] = None

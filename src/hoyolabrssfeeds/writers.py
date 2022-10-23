@@ -6,8 +6,8 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Set
-from typing import TypeVar
 from typing import Type
+from typing import TypeVar
 from xml.dom import minidom
 
 import aiofiles
@@ -18,11 +18,13 @@ from .models import FeedItem
 from .models import FeedMeta
 from .models import FeedType
 
+W = TypeVar('W', bound='AbstractFeedFileWriter')
+
 
 class AbstractFeedFileWriter(metaclass=ABCMeta):
     """ABC for feed file writing functionality."""
 
-    def __init__(self, config: FeedFileWriterConfig):
+    def __init__(self, config: FeedFileWriterConfig) -> None:
         self._config = config
 
     @property
@@ -31,19 +33,15 @@ class AbstractFeedFileWriter(metaclass=ABCMeta):
         return self._config
 
     @abstractmethod
-    async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]):
+    async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]) -> None:
         """Write feed to file."""
         pass
-
-
-# define type for subclasses of AbstractFeedFileWriter
-W = TypeVar('W', bound=AbstractFeedFileWriter)
 
 
 class FeedFileWriterFactory:
     """Factory for creating specific FeedFileWriters."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._writers = {
             str(FeedType.JSON): JSONFeedFileWriter,
             str(FeedType.ATOM): AtomFeedFileWriter
@@ -54,7 +52,7 @@ class FeedFileWriterFactory:
         """Set of feed types for which writers are registered."""
         return set(self._writers.keys())
 
-    def register_writer(self, feed_type: str, writer: Type[W]):
+    def register_writer(self, feed_type: str, writer: Type[W]) -> None:
         """Register a feed writer for a new feed type."""
 
         if feed_type in self._writers:
@@ -76,7 +74,7 @@ class FeedFileWriterFactory:
 class JSONFeedFileWriter(AbstractFeedFileWriter):
     """Export feed as JSON-Feed format (https://www.jsonfeed.org/version/1.1/)."""
 
-    async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]):
+    async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]) -> None:
         """Write feed to JSON file."""
 
         feed = {
@@ -130,11 +128,11 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
 class AtomFeedFileWriter(AbstractFeedFileWriter):
     """Export feed as Atom format (https://validator.w3.org/feed/docs/atom.html)."""
 
-    def __init__(self, config: FeedFileWriterConfig):
+    def __init__(self, config: FeedFileWriterConfig) -> None:
         super().__init__(config)
         self._doc: minidom.Document = minidom.getDOMImplementation().createDocument(None, 'feed', None)
 
-    async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]):
+    async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]) -> None:
         """Write feed to Atom file."""
 
         root = self._doc.documentElement
@@ -196,7 +194,7 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
             name: str,
             text: str,
             attr: Optional[Dict] = None
-    ):
+    ) -> None:
         """Create XML element with text and optional attributes. Append to given element."""
 
         node = self._doc.createElement(name)
@@ -213,7 +211,7 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
             parent: minidom.Element,
             name: str,
             attr: Dict
-    ):
+    ) -> None:
         """Create XML element with only attributes and append to given element."""
 
         node = self._doc.createElement(name)

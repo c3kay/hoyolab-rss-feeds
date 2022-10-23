@@ -1,6 +1,4 @@
 from os import getenv
-from os.path import expanduser
-from os.path import join
 from pathlib import Path
 from typing import Dict
 from typing import List
@@ -8,7 +6,7 @@ from typing import Optional
 
 import aiofiles
 import tomli
-from pydantic import ValidationError
+import pydantic
 
 from .errors import ConfigError
 from .models import FeedConfig
@@ -21,8 +19,8 @@ class FeedConfigLoader:
     """TOML file config loader."""
 
     def __init__(self, config_path: Optional[Path] = None):
-        fallback_path = join(expanduser('~'), '.hoyolab_feeds.toml')
-        self._path = config_path or getenv('HRF_CONFIG_PATH', fallback_path)
+        fallback_path = Path('~/.hoyolab-rss-feeds.toml').expanduser()
+        self._path = config_path or Path(getenv('HRF_CONFIG_PATH', fallback_path))
 
     async def _load_from_file(self) -> Dict:
         """Load and parse config from TOML file"""
@@ -58,7 +56,7 @@ class FeedConfigLoader:
             feed_config = FeedConfig(feed_meta=feed_meta, writer_configs=writer_configs)
         except KeyError as err:
             raise ConfigError('Could not find required key in config!') from err
-        except ValidationError as err:
+        except pydantic.ValidationError as err:
             raise ConfigError('Invalid config file!') from err
 
         return feed_config

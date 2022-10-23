@@ -3,11 +3,6 @@ class HoyolabRssFeedsBaseError(Exception):
     pass
 
 
-class MappingError(HoyolabRssFeedsBaseError):
-    """Error for invalid mapping value."""
-    pass
-
-
 class ConfigError(HoyolabRssFeedsBaseError):
     """Error for invalid configuration."""
     pass

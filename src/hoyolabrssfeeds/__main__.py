@@ -1,7 +1,8 @@
-from .feeds import GameFeedCollection
-from .configs import FeedConfigLoader
 import asyncio
 from platform import system
+
+from .configs import FeedConfigLoader
+from .feeds import GameFeedCollection
 
 
 async def create_feeds():
@@ -19,4 +20,5 @@ def main():
     asyncio.run(create_feeds())
 
 
-main()
+if __name__ == '__main__':
+    main()

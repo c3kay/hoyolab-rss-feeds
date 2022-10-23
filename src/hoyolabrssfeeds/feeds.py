@@ -1,7 +1,9 @@
 import asyncio
+import warnings
 from typing import List
 from typing import Optional
-from warnings import warn
+from typing import Type
+from typing import TypeVar
 
 import aiohttp
 
@@ -11,23 +13,28 @@ from .loaders import FeedFileLoaderFactory
 from .loaders import L
 from .models import FeedConfig
 from .models import FeedItem
+from .models import FeedItemCategory
 from .models import FeedMeta
-from .models import PostCategory
 from .writers import FeedFileWriterFactory
 from .writers import W
 
+GF = TypeVar('GF', bound='GameFeed')
+GFC = TypeVar('GFC', bound='GameFeedCollection')
+
 
 class GameFeed:
+    """Feed generator for a single game."""
+
     def __init__(
             self,
             feed_meta: FeedMeta,
             feed_writers: List[W],
             feed_loader: L
-    ):
+    ) -> None:
         # warn if identical paths for writers are found
         writer_paths = [str(writer.config.path) for writer in feed_writers]
         if len(writer_paths) != len(set(writer_paths)):
-            warn('Writers for {} game feed contain identical paths'.format(feed_meta.game.name.title()))
+            warnings.warn('Writers for {} game feed contain identical paths'.format(feed_meta.game.name.title()))
 
         self._feed_meta = feed_meta
         self._feed_writers = feed_writers
@@ -36,11 +43,14 @@ class GameFeed:
         self._was_updated = False
 
     @property
-    def was_updated(self):
+    def was_updated(self) -> bool:
+        """Flag if the feed has been updated after a create_feed() call."""
         return self._was_updated
 
     @classmethod
-    def from_config(cls, feed_config: FeedConfig):
+    def from_config(cls: Type[GF], feed_config: FeedConfig) -> GF:
+        """Create an instance via a feed config."""
+
         try:
             writer_factory = FeedFileWriterFactory()
             writers = [
@@ -58,24 +68,28 @@ class GameFeed:
 
         return cls(feed_config.feed_meta, writers, loader)
 
-    async def create_feed(self, session: Optional[aiohttp.ClientSession] = None):
+    async def create_feed(self, session: Optional[aiohttp.ClientSession] = None) -> None:
+        """Create or update a feed and write it to files."""
+
         local_session = session or aiohttp.ClientSession()
         self._was_updated = False
 
-        # load known feed items
         feed_items = await self._feed_loader.get_feed_items()
 
-        category_feeds = await asyncio.gather(*[
-            self._update_category_feed(
-                category,
-                [item for item in feed_items if item.category == category],
-                local_session
-            )
-            for category in PostCategory
-        ])
+        try:
+            category_feeds = await asyncio.gather(*[
+                self._update_category_feed(
+                    local_session,
+                    category,
+                    [item for item in feed_items if item.category == category]
+                )
+                for category in FeedItemCategory
+            ])
+        finally:
+            if session is None:
+                await local_session.close()
 
         if self._was_updated:
-            # merge category feeds together
             combined_feed = []
             for feed in category_feeds:
                 combined_feed.extend(feed)
@@ -83,21 +97,19 @@ class GameFeed:
             # sort feed items descending by id -> latest at the top
             combined_feed.sort(key=lambda item: item.id, reverse=True)
 
-            # concurrently write to files
             await asyncio.gather(*[
                 writer.write_feed(self._feed_meta, combined_feed)
                 for writer in self._feed_writers
             ])
 
-        if session is None:
-            await local_session.close()
-
     async def _update_category_feed(
             self,
-            category: PostCategory,
-            category_items: List[FeedItem],
-            session: aiohttp.ClientSession
+            session: aiohttp.ClientSession,
+            category: FeedItemCategory,
+            category_items: List[FeedItem]
     ) -> List[FeedItem]:
+        """Create or update a specific category feed."""
+
         known_ids = {
             item.id: max(item.published, (item.updated or 0))
             for item in category_items
@@ -105,6 +117,7 @@ class GameFeed:
         }
 
         latest_item_metas = await self._hoyolab.get_latest_item_metas(
+            session,
             category,
             self._feed_meta.category_size
         )
@@ -121,13 +134,11 @@ class GameFeed:
                 lambda item: item.id not in new_or_outdated_ids, category_items
             ))
 
-            # concurrently fetch new and outdated items
             fetched_items = await asyncio.gather(*[
-                self._hoyolab.get_feed_item(item_id, session)
+                self._hoyolab.get_feed_item(session, item_id)
                 for item_id in new_or_outdated_ids
             ])
 
-            # add fetched items to category feed
             category_items.extend(fetched_items)
 
             # cut off older items that exceed category_size
@@ -140,12 +151,14 @@ class GameFeed:
 
 
 class GameFeedCollection:
+    """Collection of feed generators for multiple games."""
+
     def __init__(
             self,
             feed_metas: List[FeedMeta],
             feed_writers: List[List[W]],
             feed_loaders: List[L]
-    ):
+    ) -> None:
         if not (len(feed_metas) == len(feed_writers) == len(feed_loaders)):
             raise ValueError('Parameter lists do not have the same length!')
 
@@ -159,7 +172,9 @@ class GameFeedCollection:
         ]
 
     @classmethod
-    def from_configs(cls, feed_configs: List[FeedConfig]):
+    def from_configs(cls: Type[GFC], feed_configs: List[FeedConfig]) -> GFC:
+        """Create an instance via feed configs."""
+
         metas = []
         writers = []
         loaders = []
@@ -185,13 +200,16 @@ class GameFeedCollection:
 
         return cls(metas, writers, loaders)
 
-    async def create_feeds(self, session: Optional[aiohttp.ClientSession] = None):
+    async def create_feeds(self, session: Optional[aiohttp.ClientSession] = None) -> None:
+        """Create or update a feed and write it to files."""
+
         local_session = session or aiohttp.ClientSession()
 
-        await asyncio.gather(*[
-            feed.create_feed(local_session)
-            for feed in self._game_feeds
-        ])
-
-        if session is None:
-            await local_session.close()
+        try:
+            await asyncio.gather(*[
+                feed.create_feed(local_session)
+                for feed in self._game_feeds
+            ])
+        finally:
+            if session is None:
+                await local_session.close()

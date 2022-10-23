@@ -1,41 +1,39 @@
-import json
+from json import JSONDecodeError
 from typing import Dict
 from typing import List
-from typing import Optional
 
 import aiohttp
-from pydantic import HttpUrl
-from pydantic import parse_obj_as
+import pydantic
 
 from .errors import HoyolabApiError
 from .models import FeedItem
+from .models import FeedItemCategory
 from .models import FeedItemMeta
 from .models import Game
 from .models import Language
-from .models import PostCategory
 
 HOYOLAB_API_BASE_URL = 'https://bbs-api-os.hoyolab.com/community/post/wapi/'
 DEFAULT_CATEGORY_SIZE = 5
 
 
 class HoyolabNews:
+    """Wrapper for Hoyolab REST API endpoints."""
+
     def __init__(
             self,
             game: Game,
             language: Language = Language.ENGLISH
-    ):
+    ) -> None:
         self._game = game
         self._lang = language.lower()
 
     async def _request(
             self,
+            session: aiohttp.ClientSession,
             params: Dict,
-            url: HttpUrl,
-            session: Optional[aiohttp.ClientSession] = None
+            url: pydantic.HttpUrl
     ) -> Dict:
         """Send a GET request to the Hoyolab API endpoint."""
-
-        local_session = session or aiohttp.ClientSession()
 
         headers = {
             'Origin': 'https://www.hoyolab.com',
@@ -43,32 +41,31 @@ class HoyolabNews:
         }
 
         try:
-            async with local_session.get(url, headers=headers, params=params) as response:
+            async with session.get(url, headers=headers, params=params) as response:
                 response.raise_for_status()
                 response_json = await response.json(encoding='utf-8')
 
             if response_json['retcode'] != 0:
                 # the message might be in chinese
                 raise HoyolabApiError(response_json['message'])
-        except aiohttp.ClientError as err:
-            raise HoyolabApiError('Could not request Hoyolab endpoint!') from err
-        except json.JSONDecodeError as err:
+        except JSONDecodeError as err:
             raise HoyolabApiError('Could not decode JSON response!') from err
+        except aiohttp.ContentTypeError as err:
+            raise HoyolabApiError('Could not decode JSON response!') from err
+        except aiohttp.ClientError as err:  # base exception for aiohttp
+            raise HoyolabApiError('Could not request Hoyolab endpoint!') from err
         except KeyError as err:
             raise HoyolabApiError('Unexpected response!') from err
-        finally:
-            if session is None:
-                await local_session.close()
 
         return response_json
 
     async def get_news_list(
             self,
-            category: PostCategory,
-            category_size: int = DEFAULT_CATEGORY_SIZE,
-            session: aiohttp.ClientSession = None
+            session: aiohttp.ClientSession,
+            category: FeedItemCategory,
+            category_size: int = DEFAULT_CATEGORY_SIZE
     ) -> List[Dict]:
-        """Request an overview of the latest posts from Hoyolab."""
+        """Request an overview of the latest posts."""
 
         params = {
             'gids': self._game,
@@ -76,42 +73,37 @@ class HoyolabNews:
             'type': category
         }
 
-        url = parse_obj_as(HttpUrl, HOYOLAB_API_BASE_URL + 'getNewsList')
+        url = pydantic.parse_obj_as(pydantic.HttpUrl, HOYOLAB_API_BASE_URL + 'getNewsList')
 
-        response = await self._request(params, url, session)
+        response = await self._request(session, params, url)
 
         return response['data']['list']
 
-    async def get_post(
-            self,
-            post_id: int,
-            session: Optional[aiohttp.ClientSession] = None
-    ) -> Dict:
-        """Request single post with full text from Hoyolab."""
+    async def get_post(self, session: aiohttp.ClientSession, post_id: int) -> Dict:
+        """Request single post with fulltext."""
 
         params = {
             'gids': self._game,
             'post_id': post_id
         }
 
-        url = parse_obj_as(HttpUrl, HOYOLAB_API_BASE_URL + 'getPostFull')
+        url = pydantic.parse_obj_as(pydantic.HttpUrl, HOYOLAB_API_BASE_URL + 'getPostFull')
 
-        response = await self._request(params, url, session)
+        response = await self._request(session, params, url)
 
         return response['data']['post']
 
     async def get_latest_item_metas(
             self,
-            category: PostCategory,
-            category_size: int = DEFAULT_CATEGORY_SIZE,
-            session: Optional[aiohttp.ClientSession] = None
+            session: aiohttp.ClientSession,
+            category: FeedItemCategory,
+            category_size: int = DEFAULT_CATEGORY_SIZE
     ) -> List[FeedItemMeta]:
-        """Get the meta info of the latest posts in the specified category."""
+        """Get the meta info of the latest posts in a specified category."""
 
-        local_session = session or aiohttp.ClientSession()
         latest_posts = []
 
-        category_posts = await self.get_news_list(category, category_size, local_session)
+        category_posts = await self.get_news_list(session, category, category_size)
 
         for post in category_posts:
             published_ts = int(post['post']['created_at'])
@@ -123,21 +115,14 @@ class HoyolabNews:
             }
 
             # parsing for type conversions
-            latest_posts.append(parse_obj_as(FeedItemMeta, item_meta))
-
-        if session is None:
-            await local_session.close()
+            latest_posts.append(pydantic.parse_obj_as(FeedItemMeta, item_meta))
 
         return latest_posts
 
-    async def get_feed_item(
-            self,
-            post_id: int,
-            session: Optional[aiohttp.ClientSession] = None
-    ) -> FeedItem:
-        """Get a single post as FeedItem."""
+    async def get_feed_item(self, session: aiohttp.ClientSession, post_id: int) -> FeedItem:
+        """Get a single post as feed item."""
 
-        post = await self.get_post(post_id, session)
+        post = await self.get_post(session, post_id)
 
         item = {
             'id': post['post']['post_id'],
@@ -154,4 +139,4 @@ class HoyolabNews:
         if len(post['image_list']) > 0:
             item['image'] = post['image_list'][0]['url']
 
-        return parse_obj_as(FeedItem, item)
+        return pydantic.parse_obj_as(FeedItem, item)

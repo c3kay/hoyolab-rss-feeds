@@ -1,28 +1,29 @@
 import json
 from abc import ABCMeta
 from abc import abstractmethod
-from os.path import exists
 from typing import Dict
 from typing import List
 from typing import Set
-from typing import TypeVar
 from typing import Type
+from typing import TypeVar
 
 import aiofiles
-from pydantic import parse_obj_as
+import pydantic
 
 from .errors import FeedIOError
 from .models import FeedFileConfig
 from .models import FeedItem
+from .models import FeedItemCategory
 from .models import FeedType
-from .models import PostCategory
 from .writers import W
+
+L = TypeVar('L', bound='AbstractFeedFileLoader')
 
 
 class AbstractFeedFileLoader(metaclass=ABCMeta):
     """ABC for feed file loading functionality."""
 
-    def __init__(self, config):
+    def __init__(self, config: FeedFileConfig) -> None:
         self._config = config
 
     @property
@@ -36,13 +37,10 @@ class AbstractFeedFileLoader(metaclass=ABCMeta):
         pass
 
 
-L = TypeVar('L', bound=AbstractFeedFileLoader)
-
-
 class FeedFileLoaderFactory:
     """Factory for creating specific FeedFileLoaders."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._loaders = {
             str(FeedType.JSON): JSONFeedFileLoader
             # TODO: add atom loader
@@ -74,7 +72,7 @@ class FeedFileLoaderFactory:
     def create_any_loader(self, writers: List[W]) -> L:
         for writer in writers:
             if writer.config.feed_type in self._loaders:
-                loader_config = parse_obj_as(FeedFileConfig, writer.config)
+                loader_config = pydantic.parse_obj_as(FeedFileConfig, writer.config)
                 return self.create_loader(loader_config)
 
         raise ValueError('Could not create loader from given writers!')
@@ -86,13 +84,13 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
     async def get_feed_items(self) -> List[FeedItem]:
         """Returns feed items of JSON-Feed if feed exists."""
 
-        if exists(self._config.path):
+        if self._config.path.exists():
             feed = await self._load_from_file()
             feed_items = []
 
             try:
                 for item in feed['items']:
-                    category = PostCategory.from_str(item['tags'][0])
+                    category = FeedItemCategory.from_str(item['tags'][0])
 
                     item_dict = {
                         'id': item['id'],
@@ -110,12 +108,12 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
                         item_dict['image'] = item['image']
 
                     feed_items.append(item_dict)
-
-                    return parse_obj_as(List[FeedItem], feed_items)
             except KeyError as err:
                 raise FeedIOError('Could not find required key in JSON feed!') from err
             except ValueError as err:
                 raise FeedIOError('Found unexpected value in JSON feed!') from err
+
+            return pydantic.parse_obj_as(List[FeedItem], feed_items)
         else:
             return []
 
