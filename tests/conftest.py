@@ -1,7 +1,10 @@
 import asyncio
 from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from platform import system
+from re import fullmatch
+from typing import Dict
 from typing import List
 
 import pytest
@@ -11,6 +14,8 @@ from pydantic import parse_obj_as
 
 from hoyolabrssfeeds import models
 
+
+# ---- SESSION FIXTURES ----
 
 @pytest.fixture(scope='session')
 def event_loop():
@@ -26,6 +31,8 @@ async def client_session(event_loop):
     async with ClientSession(loop=event_loop, raise_for_status=True) as cs:
         yield cs
 
+
+# ---- TEST FIXTURES ----
 
 @pytest.fixture
 def json_path(tmpdir) -> Path:
@@ -78,9 +85,9 @@ def feed_item() -> models.FeedItem:
         title='Test Article',
         author='John Doe',
         content='<p>Hello World!</p>',
-        category=models.PostCategory.INFO,
-        published=datetime(2022, 10, 3, 16),
-        updated=datetime(2022, 10, 3, 18),
+        category=models.FeedItemCategory.INFO,
+        published=datetime(2022, 10, 3, 16, tzinfo=timezone.utc),
+        updated=datetime(2022, 10, 3, 18, tzinfo=timezone.utc),
         image=parse_obj_as(HttpUrl, 'https://example.org/')
     )
 
@@ -123,3 +130,33 @@ def feed_config_no_loader(
         feed_meta=feed_meta,
         writer_configs=[json_feed_file_writer_config]
     )
+
+
+# ---- ASSERTION HELPERS ----
+# https://docs.pytest.org/en/6.2.x/assert.html#assertion-introspection-details
+
+def validate_hoyolab_post(post: Dict, is_full_post: bool):
+    assert type(post['post']['post_id']) is str
+    assert fullmatch(r'\d+', post['post']['post_id']) is not None
+
+    assert type(post['post']['created_at']) is int
+    assert post['post']['created_at'] > 0
+
+    assert type(post['last_modify_time']) is int
+    assert post['last_modify_time'] >= 0
+
+    if is_full_post:
+        assert type(post['post']['official_type']) is int
+        assert post['post']['official_type'] in [c.value for c in models.FeedItemCategory]
+
+        assert type(post['user']['nickname']) is str
+        assert len(post['user']['nickname']) > 0
+
+        assert type(post['post']['content']) is str
+        assert len(post['post']['content']) > 0
+
+        assert type(post['post']['subject']) is str
+        assert len(post['post']['subject']) > 0
+
+        assert type(post['image_list']) is list
+        assert len(post['image_list']) >= 0

@@ -79,7 +79,7 @@ async def test_json_feed_loader(json_feed_file_config: models.FeedFileConfig):
 
     assert item.id == 42
     assert item.author == 'John Doe'
-    assert item.category == models.PostCategory.INFO
+    assert item.category == models.FeedItemCategory.INFO
 
     # TODO: complete asserts for feed?
 

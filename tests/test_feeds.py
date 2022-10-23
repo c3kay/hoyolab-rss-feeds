@@ -39,7 +39,7 @@ def mocked_writers(mocker: MockFixture) -> List[MagicMock]:
 @pytest.fixture
 def category_feeds(feed_item: models.FeedItem) -> List[List[models.FeedItem]]:
     cat_feeds = []
-    for i, cat in enumerate(models.PostCategory):
+    for i, cat in enumerate(models.FeedItemCategory):
         item = feed_item.copy()
         item.id += i
         item.category = cat
@@ -141,11 +141,7 @@ async def test_category_feed_new_item(
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
-    updated_feed = await game_feed._update_category_feed(
-        models.PostCategory.INFO,
-        [feed_item],
-        client_session
-    )
+    updated_feed = await game_feed._update_category_feed(client_session, models.FeedItemCategory.INFO, [feed_item])
 
     mocked_metas.assert_awaited()
     mocked_metas.assert_called_once()
@@ -193,11 +189,8 @@ async def test_category_feed_updated_item(
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
-    updated_feed = await game_feed._update_category_feed(
-        models.PostCategory.INFO,
-        [other_item, feed_item],
-        client_session
-    )
+    updated_feed = await game_feed._update_category_feed(client_session, models.FeedItemCategory.INFO,
+                                                         [other_item, feed_item])
 
     mocked_metas.assert_awaited()
     mocked_metas.assert_called_once()
@@ -234,11 +227,7 @@ async def test_category_feed_unchanged(
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
-    updated_feed = await game_feed._update_category_feed(
-        models.PostCategory.INFO,
-        [feed_item],
-        client_session
-    )
+    updated_feed = await game_feed._update_category_feed(client_session, models.FeedItemCategory.INFO, [feed_item])
 
     mocked_metas.assert_awaited()
     mocked_metas.assert_called_once()

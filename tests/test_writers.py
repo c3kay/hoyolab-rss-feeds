@@ -1,5 +1,4 @@
 import json
-from os.path import exists
 from pathlib import Path
 from typing import List
 
@@ -67,7 +66,7 @@ async def test_json_feed_writer(
 
     await writer.write_feed(feed_meta, feed_item_list)
 
-    assert exists(json_feed_file_writer_config.path)
+    assert json_feed_file_writer_config.path.exists()
 
     async with aiofiles.open(json_feed_file_writer_config.path, 'r') as fd:
         feed_str = await fd.read()
@@ -95,7 +94,7 @@ async def test_atom_feed_writer(
 
     await writer.write_feed(feed_meta, feed_item_list)
 
-    assert exists(atom_feed_file_writer_config.path)
+    assert atom_feed_file_writer_config.path.exists()
 
     async with aiofiles.open(atom_feed_file_writer_config.path, 'rb') as fd:
         feed_bytes = await fd.read()
