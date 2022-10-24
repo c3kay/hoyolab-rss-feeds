@@ -35,22 +35,22 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary"
 ]
 dependencies = [
-    "aiohttp",
-    "aiofiles",
-    "pydantic",
-    "tomli"
+    "aiohttp >= 3.8.3",
+    "aiofiles >= 22.1.0",
+    "pydantic >= 1.10.2",
+    "tomli >= 2.0.1"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "tox",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "pytest-mock",
-    "atoma",
-    "langdetect"
+    "tox >= 3.26.0",
+    "pytest >= 7.1.3",
+    "pytest-asyncio >= 0.20.1",
+    "pytest-cov >= 4.0.0",
+    "pytest-mock >= 3.10.0",
+    "atoma >= 0.0.17",
+    "langdetect >= 1.0.9"
 ]
 
 [project.urls]
