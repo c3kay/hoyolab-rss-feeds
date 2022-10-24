@@ -20,24 +20,26 @@ class FeedConfigLoader:
     """TOML file config loader."""
 
     def __init__(self, config_path: Optional[Path] = None):
-        fallback_path = Path('~/.hoyolab-rss-feeds.toml').expanduser()
-        self._path = config_path or Path(getenv('HRF_CONFIG_PATH', fallback_path))
+        fallback_path = Path("~/.hoyolab-rss-feeds.toml").expanduser()
+        self._path = config_path or Path(getenv("HRF_CONFIG_PATH", fallback_path))
 
     async def _load_from_file(self) -> Dict:
         """Load and parse config from TOML file"""
 
         try:
-            async with aiofiles.open(self._path, 'r') as fd:
+            async with aiofiles.open(self._path, "r") as fd:
                 conf_str = await fd.read()
 
             config = tomli.loads(conf_str)
         except IOError as err:
-            raise ConfigIOError('Could not open config file at "{}"!'.format(self._path)) from err
+            raise ConfigIOError(
+                'Could not open config file at "{}"!'.format(self._path)
+            ) from err
         except tomli.TOMLDecodeError as err:
-            raise ConfigFormatError('Could not parse TOML config file!') from err
+            raise ConfigFormatError("Could not parse TOML config file!") from err
 
         if not any([game.name.lower() in config for game in Game]):
-            raise ConfigFormatError('Could not find any game configs!')
+            raise ConfigFormatError("Could not find any game configs!")
 
         return config
 
@@ -52,11 +54,11 @@ class FeedConfigLoader:
 
             # merge root keys into game config dict
             for key, val in config_dict.items():
-                if key not in games and key != 'file':
+                if key not in games and key != "file":
                     # only set key if not already exists
                     game_config_dict.setdefault(key, val)
 
-            file_config_dict = game_config_dict.pop('file')
+            file_config_dict = game_config_dict.pop("file")
 
             writer_configs = [
                 FeedFileWriterConfig(feed_type=feed_type, **feed_config)
@@ -66,9 +68,9 @@ class FeedConfigLoader:
             feed_meta = FeedMeta(game=game, **game_config_dict)
             feed_config = FeedConfig(feed_meta=feed_meta, writer_configs=writer_configs)
         except KeyError as err:
-            raise ConfigFormatError('Could not find required key in config!') from err
+            raise ConfigFormatError("Could not find required key in config!") from err
         except pydantic.ValidationError as err:
-            raise ConfigFormatError('Invalid config value!') from err
+            raise ConfigFormatError("Invalid config value!") from err
 
         return feed_config
 

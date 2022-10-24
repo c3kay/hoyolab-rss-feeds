@@ -8,12 +8,4 @@ from . import loaders
 from . import models
 from . import writers
 
-__all__ = [
-    'configs',
-    'errors',
-    'feeds',
-    'hoyolab',
-    'loaders',
-    'models',
-    'writers'
-]
+__all__ = ["configs", "errors", "feeds", "hoyolab", "loaders", "models", "writers"]

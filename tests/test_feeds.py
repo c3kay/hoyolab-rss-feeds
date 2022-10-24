@@ -16,9 +16,9 @@ from hoyolabrssfeeds.writers import JSONFeedFileWriter
 
 
 def test_game_feed_was_updated(
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
 ):
     feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
 
@@ -26,14 +26,14 @@ def test_game_feed_was_updated(
 
 
 def test_same_path_warning(
-        feed_meta: models.FeedMeta,
-        mocked_loader: MagicMock,
-        json_feed_file_writer_config: models.FeedFileWriterConfig
+    feed_meta: models.FeedMeta,
+    mocked_loader: MagicMock,
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
 ):
     writer = JSONFeedFileWriter(json_feed_file_writer_config)
     duplicate_writers = [writer, writer]
 
-    with pytest.warns(UserWarning, match='identical paths'):
+    with pytest.warns(UserWarning, match="identical paths"):
         feeds.GameFeed(feed_meta, duplicate_writers, mocked_loader)
 
 
@@ -60,20 +60,22 @@ def test_create_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
 
 
 def test_create_from_invalid_config(json_path: Path, feed_meta: models.FeedMeta):
-    writer_config = models.FeedFileWriterConfig(feed_type='invalid', path=json_path)
-    invalid_config = models.FeedConfig(feed_meta=feed_meta, writer_configs=[writer_config])
+    writer_config = models.FeedFileWriterConfig(feed_type="invalid", path=json_path)
+    invalid_config = models.FeedConfig(
+        feed_meta=feed_meta, writer_configs=[writer_config]
+    )
 
     with pytest.raises(errors.ConfigFormatError):
         feeds.GameFeed.from_config(invalid_config)
 
 
 async def test_category_feed_new_item(
-        mocker: MockFixture,
-        client_session: ClientSession,
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock,
-        feed_item: models.FeedItem
+    mocker: MockFixture,
+    client_session: ClientSession,
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
+    feed_item: models.FeedItem,
 ):
     feed_meta.category_size = 2
 
@@ -83,25 +85,23 @@ async def test_category_feed_new_item(
     new_item.updated = datetime.now()
 
     mocked_metas = mocker.patch(
-        'hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas',
+        "hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas",
         spec=True,
         return_value=[
             models.FeedItemMeta(id=new_item.id, last_modified=new_item.updated),
             models.FeedItemMeta(id=feed_item.id, last_modified=feed_item.updated),
-        ]
+        ],
     )
 
     mocked_item = mocker.patch(
-        'hoyolabrssfeeds.feeds.HoyolabNews.get_feed_item',
+        "hoyolabrssfeeds.feeds.HoyolabNews.get_feed_item",
         spec=True,
-        return_value=new_item
+        return_value=new_item,
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
     updated_feed = await game_feed._update_category_feed(
-        client_session,
-        models.FeedItemCategory.INFO,
-        [feed_item]
+        client_session, models.FeedItemCategory.INFO, [feed_item]
     )
 
     mocked_metas.assert_awaited()
@@ -119,12 +119,12 @@ async def test_category_feed_new_item(
 
 
 async def test_category_feed_updated_item(
-        mocker: MockFixture,
-        client_session: ClientSession,
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock,
-        feed_item: models.FeedItem
+    mocker: MockFixture,
+    client_session: ClientSession,
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
+    feed_item: models.FeedItem,
 ):
     feed_meta.category_size = 2
 
@@ -135,25 +135,23 @@ async def test_category_feed_updated_item(
     other_item.id += 1
 
     mocked_metas = mocker.patch(
-        'hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas',
+        "hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas",
         spec=True,
         return_value=[
             models.FeedItemMeta(id=other_item.id, last_modified=other_item.updated),
             models.FeedItemMeta(id=updated_item.id, last_modified=updated_item.updated),
-        ]
+        ],
     )
 
     mocked_item = mocker.patch(
-        'hoyolabrssfeeds.feeds.HoyolabNews.get_feed_item',
+        "hoyolabrssfeeds.feeds.HoyolabNews.get_feed_item",
         spec=True,
-        return_value=updated_item
+        return_value=updated_item,
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
     updated_feed = await game_feed._update_category_feed(
-        client_session,
-        models.FeedItemCategory.INFO,
-        [other_item, feed_item]
+        client_session, models.FeedItemCategory.INFO, [other_item, feed_item]
     )
 
     mocked_metas.assert_awaited()
@@ -170,31 +168,28 @@ async def test_category_feed_updated_item(
 
 
 async def test_category_feed_unchanged(
-        mocker: MockFixture,
-        client_session: ClientSession,
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock,
-        feed_item: models.FeedItem
+    mocker: MockFixture,
+    client_session: ClientSession,
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
+    feed_item: models.FeedItem,
 ):
     mocked_metas = mocker.patch(
-        'hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas',
+        "hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas",
         spec=True,
         return_value=[
             models.FeedItemMeta(id=feed_item.id, last_modified=feed_item.updated)
-        ]
+        ],
     )
 
     mocked_item = mocker.patch(
-        'hoyolabrssfeeds.feeds.HoyolabNews.get_feed_item',
-        spec=True
+        "hoyolabrssfeeds.feeds.HoyolabNews.get_feed_item", spec=True
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
     updated_feed = await game_feed._update_category_feed(
-        client_session,
-        models.FeedItemCategory.INFO,
-        [feed_item]
+        client_session, models.FeedItemCategory.INFO, [feed_item]
     )
 
     mocked_metas.assert_awaited()
@@ -208,24 +203,24 @@ async def test_category_feed_unchanged(
 
 
 async def test_create_feed(
-        mocker: MockFixture,
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock,
-        category_feeds: List[List[models.FeedItem]],
-        combined_feed: List[models.FeedItem]
+    mocker: MockFixture,
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
+    category_feeds: List[List[models.FeedItem]],
+    combined_feed: List[models.FeedItem],
 ):
     mocked_update_feed = mocker.patch(
-        'hoyolabrssfeeds.feeds.GameFeed._update_category_feed',
+        "hoyolabrssfeeds.feeds.GameFeed._update_category_feed",
         spec=True,
-        side_effect=category_feeds
+        side_effect=category_feeds,
     )
 
     mocked_was_updated = mocker.patch(
-        'hoyolabrssfeeds.feeds.GameFeed._was_updated',
+        "hoyolabrssfeeds.feeds.GameFeed._was_updated",
         new_callable=mocker.PropertyMock,
         create=True,
-        return_value=True
+        return_value=True,
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
@@ -246,21 +241,21 @@ async def test_create_feed(
 
 
 async def test_create_feed_unchanged(
-        mocker: MockFixture,
-        client_session: ClientSession,
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock,
-        category_feeds: List[List[models.FeedItem]],
-        combined_feed: List[models.FeedItem]
+    mocker: MockFixture,
+    client_session: ClientSession,
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
+    category_feeds: List[List[models.FeedItem]],
+    combined_feed: List[models.FeedItem],
 ):
     # set known feed items from file
     mocked_loader.get_feed_items.return_value = combined_feed
 
     mocked_update_feed = mocker.patch(
-        'hoyolabrssfeeds.feeds.GameFeed._update_category_feed',
+        "hoyolabrssfeeds.feeds.GameFeed._update_category_feed",
         spec=True,
-        side_effect=category_feeds
+        side_effect=category_feeds,
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
@@ -278,8 +273,7 @@ async def test_create_feed_unchanged(
 
 
 def test_create_collection_from_config(
-        feed_config: models.FeedConfig,
-        feed_config_no_loader: models.FeedConfig
+    feed_config: models.FeedConfig, feed_config_no_loader: models.FeedConfig
 ):
     # NOTE: there is currently no check for identical paths of multiple game feeds
     configs = [feed_config, feed_config_no_loader]
@@ -299,12 +293,12 @@ def test_create_collection_from_config(
 
 
 def test_create_collection_from_invalid_config(
-        feed_config: models.FeedConfig,
-        json_path: Path,
-        feed_meta: models.FeedMeta
+    feed_config: models.FeedConfig, json_path: Path, feed_meta: models.FeedMeta
 ):
-    writer_config = models.FeedFileWriterConfig(feed_type='invalid', path=json_path)
-    invalid_config = models.FeedConfig(feed_meta=feed_meta, writer_configs=[writer_config])
+    writer_config = models.FeedFileWriterConfig(feed_type="invalid", path=json_path)
+    invalid_config = models.FeedConfig(
+        feed_meta=feed_meta, writer_configs=[writer_config]
+    )
 
     configs = [feed_config, invalid_config]
 
@@ -313,20 +307,19 @@ def test_create_collection_from_invalid_config(
 
 
 async def test_create_feed_collections(
-        mocker: MockFixture,
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock
+    mocker: MockFixture,
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
 ):
     mocked_create = mocker.patch(
-        'hoyolabrssfeeds.feeds.GameFeed.create_feed',
-        spec=True
+        "hoyolabrssfeeds.feeds.GameFeed.create_feed", spec=True
     )
 
     collection = feeds.GameFeedCollection(
         [feed_meta, feed_meta],
         [mocked_writers, mocked_writers],
-        [mocked_loader, mocked_loader]
+        [mocked_loader, mocked_loader],
     )
 
     await collection.create_feeds()
@@ -336,13 +329,13 @@ async def test_create_feed_collections(
 
 
 async def test_invalid_feed_collection(
-        feed_meta: models.FeedMeta,
-        mocked_writers: List[MagicMock],
-        mocked_loader: MagicMock
+    feed_meta: models.FeedMeta,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
 ):
     with pytest.raises(ValueError):
         feeds.GameFeedCollection(
             [feed_meta, feed_meta],
             [mocked_writers],
-            [mocked_loader, mocked_loader, mocked_loader]
+            [mocked_loader, mocked_loader, mocked_loader],
         )

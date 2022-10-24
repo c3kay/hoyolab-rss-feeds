@@ -37,6 +37,7 @@ async def test_feed_collection(client_session: ClientSession, tmp_path: Path):
 
 # ---- HELPER FUNCTIONS ----
 
+
 async def _write_config(base_tmp_path: Path):
     toml_templ = """
         category_size = 3
@@ -53,8 +54,8 @@ async def _write_config(base_tmp_path: Path):
 
     toml_config = toml_templ.format(base=base_tmp_path)
 
-    config_path = base_tmp_path / Path('feeds.toml')
-    async with aiofiles.open(config_path, 'w') as fd:
+    config_path = base_tmp_path / Path("feeds.toml")
+    async with aiofiles.open(config_path, "w") as fd:
         await fd.write(toml_config)
 
     return config_path

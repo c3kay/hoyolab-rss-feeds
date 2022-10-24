@@ -21,8 +21,8 @@ def test_factory_feed_types():
 
 
 def test_factory_create_writer(
-        json_feed_file_writer_config: models.FeedFileWriterConfig,
-        atom_feed_file_writer_config: models.FeedFileWriterConfig
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+    atom_feed_file_writer_config: models.FeedFileWriterConfig,
 ):
     factory = writers.FeedFileWriterFactory()
     json_writer = factory.create_writer(json_feed_file_writer_config)
@@ -37,11 +37,11 @@ def test_factory_create_writer(
 
 def test_factory_register_writer(json_path: Path):
     factory = writers.FeedFileWriterFactory()
-    factory.register_writer('custom', writers.JSONFeedFileWriter)
+    factory.register_writer("custom", writers.JSONFeedFileWriter)
 
-    assert 'custom' in factory.feed_types
+    assert "custom" in factory.feed_types
 
-    custom_config = models.FeedFileWriterConfig(feed_type='custom', path=json_path)
+    custom_config = models.FeedFileWriterConfig(feed_type="custom", path=json_path)
     writer = factory.create_writer(custom_config)
 
     assert isinstance(writer, writers.JSONFeedFileWriter)
@@ -54,16 +54,18 @@ def test_factory_register_duplicate_writer():
         factory.register_writer(models.FeedType.JSON, writers.JSONFeedFileWriter)
 
 
-def test_json_feed_writer_config(json_feed_file_writer_config: models.FeedFileWriterConfig):
+def test_json_feed_writer_config(
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+):
     writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
 
     assert writer.config == json_feed_file_writer_config
 
 
 async def test_json_feed_writer(
-        json_feed_file_writer_config: models.FeedFileWriterConfig,
-        feed_meta: models.FeedMeta,
-        feed_item_list: List[models.FeedItem]
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+    feed_meta: models.FeedMeta,
+    feed_item_list: List[models.FeedItem],
 ):
     writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
 
@@ -71,7 +73,7 @@ async def test_json_feed_writer(
 
     assert json_feed_file_writer_config.path.exists()
 
-    async with aiofiles.open(json_feed_file_writer_config.path, 'r') as fd:
+    async with aiofiles.open(json_feed_file_writer_config.path, "r") as fd:
         feed_str = await fd.read()
 
     # this should raise an error if feed is invalid -> indirect feed validation
@@ -82,10 +84,10 @@ async def test_json_feed_writer(
     assert feed.title == feed_meta.title
 
 
-@pytest.mark.skipif(system() == 'Windows', reason='Currently not working on Windows')
+@pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
 async def test_write_json_feed_io_error(
-        json_feed_file_writer_config: models.FeedFileWriterConfig,
-        feed_meta: models.FeedMeta
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+    feed_meta: models.FeedMeta,
 ):
     writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
 
@@ -96,16 +98,18 @@ async def test_write_json_feed_io_error(
         await writer.write_feed(feed_meta, [])
 
 
-def test_atom_feed_writer_config(atom_feed_file_writer_config: models.FeedFileWriterConfig):
+def test_atom_feed_writer_config(
+    atom_feed_file_writer_config: models.FeedFileWriterConfig,
+):
     writer = writers.JSONFeedFileWriter(atom_feed_file_writer_config)
 
     assert writer.config == atom_feed_file_writer_config
 
 
 async def test_atom_feed_writer(
-        atom_feed_file_writer_config: models.FeedFileWriterConfig,
-        feed_meta: models.FeedMeta,
-        feed_item_list: List[models.FeedItem]
+    atom_feed_file_writer_config: models.FeedFileWriterConfig,
+    feed_meta: models.FeedMeta,
+    feed_item_list: List[models.FeedItem],
 ):
     writer = writers.AtomFeedFileWriter(atom_feed_file_writer_config)
 
@@ -113,7 +117,7 @@ async def test_atom_feed_writer(
 
     assert atom_feed_file_writer_config.path.exists()
 
-    async with aiofiles.open(atom_feed_file_writer_config.path, 'rb') as fd:
+    async with aiofiles.open(atom_feed_file_writer_config.path, "rb") as fd:
         feed_bytes = await fd.read()
 
     feed = atoma.parse_atom_bytes(feed_bytes)
@@ -122,10 +126,10 @@ async def test_atom_feed_writer(
     assert feed.title.value == feed_meta.title
 
 
-@pytest.mark.skipif(system() == 'Windows', reason='Currently not working on Windows')
+@pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
 async def test_write_atom_feed_io_error(
-        atom_feed_file_writer_config: models.FeedFileWriterConfig,
-        feed_meta: models.FeedMeta
+    atom_feed_file_writer_config: models.FeedFileWriterConfig,
+    feed_meta: models.FeedMeta,
 ):
     writer = writers.AtomFeedFileWriter(atom_feed_file_writer_config)
 

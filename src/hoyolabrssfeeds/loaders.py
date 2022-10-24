@@ -18,7 +18,7 @@ from .models import FeedItemCategory
 from .models import FeedType
 from .writers import W
 
-L = TypeVar('L', bound='AbstractFeedFileLoader')
+L = TypeVar("L", bound="AbstractFeedFileLoader")
 
 
 class AbstractFeedFileLoader(metaclass=ABCMeta):
@@ -56,7 +56,9 @@ class FeedFileLoaderFactory:
         """Register feed loader for a new feed type."""
 
         if feed_type in self._loaders:
-            raise ValueError('Feed loader already exists for feed type "{}"!'.format(feed_type))
+            raise ValueError(
+                'Feed loader already exists for feed type "{}"!'.format(feed_type)
+            )
 
         self._loaders[feed_type] = loader
 
@@ -66,7 +68,9 @@ class FeedFileLoaderFactory:
         try:
             loader = self._loaders[config.feed_type](config)
         except KeyError as err:
-            raise ValueError('No loader registered for "{}"!'.format(config.feed_type)) from err
+            raise ValueError(
+                'No loader registered for "{}"!'.format(config.feed_type)
+            ) from err
 
         return loader
 
@@ -76,7 +80,7 @@ class FeedFileLoaderFactory:
                 loader_config = pydantic.parse_obj_as(FeedFileConfig, writer.config)
                 return self.create_loader(loader_config)
 
-        raise ValueError('Could not create loader from given writers!')
+        raise ValueError("Could not create loader from given writers!")
 
 
 class JSONFeedFileLoader(AbstractFeedFileLoader):
@@ -90,29 +94,31 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
             feed_items = []
 
             try:
-                for item in feed['items']:
-                    category = FeedItemCategory.from_str(item['tags'][0])
+                for item in feed["items"]:
+                    category = FeedItemCategory.from_str(item["tags"][0])
 
                     item_dict = {
-                        'id': item['id'],
-                        'title': item['title'],
-                        'author': item['authors'][0]['name'],
-                        'content': item['content_html'],
-                        'category': category,
-                        'published': item['date_published']
+                        "id": item["id"],
+                        "title": item["title"],
+                        "author": item["authors"][0]["name"],
+                        "content": item["content_html"],
+                        "category": category,
+                        "published": item["date_published"],
                     }
 
-                    if 'date_modified' in item:
-                        item_dict['updated'] = item['date_modified']
+                    if "date_modified" in item:
+                        item_dict["updated"] = item["date_modified"]
 
-                    if 'image' in item:
-                        item_dict['image'] = item['image']
+                    if "image" in item:
+                        item_dict["image"] = item["image"]
 
                     feed_items.append(item_dict)
             except KeyError as err:
-                raise FeedFormatError('Could not find required key in JSON feed!') from err
+                raise FeedFormatError(
+                    "Could not find required key in JSON feed!"
+                ) from err
             except ValueError as err:
-                raise FeedFormatError('Found unexpected value in JSON feed!') from err
+                raise FeedFormatError("Found unexpected value in JSON feed!") from err
 
             return pydantic.parse_obj_as(List[FeedItem], feed_items)
         else:
@@ -122,13 +128,15 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
         """Load JSON-Feed from file."""
 
         try:
-            async with aiofiles.open(self._config.path, 'r', encoding='utf-8') as fd:
+            async with aiofiles.open(self._config.path, "r", encoding="utf-8") as fd:
                 feed_json = await fd.read()
 
             feed = json.loads(feed_json)
         except IOError as err:
-            raise FeedIOError('Could not read JSON file from "{}"!'.format(self._config.path)) from err
+            raise FeedIOError(
+                'Could not read JSON file from "{}"!'.format(self._config.path)
+            ) from err
         except json.JSONDecodeError as err:
-            raise FeedFormatError('Could not decode JSON file!') from err
+            raise FeedFormatError("Could not decode JSON file!") from err
 
         return feed

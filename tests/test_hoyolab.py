@@ -24,9 +24,7 @@ async def test_api_post_endpoint(client_session: ClientSession, game: models.Gam
 
 
 async def test_api_list_endpoint(
-        client_session: ClientSession,
-        game: models.Game,
-        category: models.FeedItemCategory
+    client_session: ClientSession, game: models.Game, category: models.FeedItemCategory
 ):
     api = hoyolab.HoyolabNews(game)
     news_list = await api.get_news_list(client_session, category, 2)
@@ -38,7 +36,7 @@ async def test_api_list_endpoint(
         validate_hoyolab_post(post, is_full_post=False)
 
 
-@pytest.mark.xfail(reason='not accurate for all languages')
+@pytest.mark.xfail(reason="not accurate for all languages")
 async def test_language(client_session: ClientSession, language: models.Language):
     # NOTE: The list endpoint is not checked due to insufficient text.
     # The text of the list endpoint is also not used for the feeds.
@@ -48,13 +46,13 @@ async def test_language(client_session: ClientSession, language: models.Language
     # pure text post for a decent recognition
     post_id = 7156359
     post = await api.get_post(client_session, post_id)
-    content = post['post']['content']
+    content = post["post"]["content"]
 
     # only use first letters of code if not chinese
     # https://github.com/Mimino666/langdetect
     expected = language.lower()
-    if not expected.startswith('zh'):
-        expected = expected.partition('-')[0]
+    if not expected.startswith("zh"):
+        expected = expected.partition("-")[0]
 
     assert langdetect.detect(content) == expected
 
@@ -63,22 +61,22 @@ async def test_request_errors(client_session: ClientSession):
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
 
     # request error
-    error_url = 'https://httpbin.org/status/500'
-    with pytest.raises(errors.HoyolabApiError, match='Could not request'):
+    error_url = "https://httpbin.org/status/500"
+    with pytest.raises(errors.HoyolabApiError, match="Could not request"):
         await api._request(client_session, {}, error_url)
 
     # decode error
-    error_url = 'https://httpbin.org/html'
-    with pytest.raises(errors.HoyolabApiError, match='Could not decode'):
+    error_url = "https://httpbin.org/html"
+    with pytest.raises(errors.HoyolabApiError, match="Could not decode"):
         await api._request(client_session, {}, error_url)
 
     # unexpected response
-    error_url = 'https://httpbin.org/json'
-    with pytest.raises(errors.HoyolabApiError, match='Unexpected response'):
+    error_url = "https://httpbin.org/json"
+    with pytest.raises(errors.HoyolabApiError, match="Unexpected response"):
         await api._request(client_session, {}, error_url)
 
     # hoyolab error code
-    error_url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList'
+    error_url = "https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList"
     with pytest.raises(errors.HoyolabApiError):
         # missing params raise exception here
         await api._request(client_session, {}, error_url)
@@ -86,34 +84,31 @@ async def test_request_errors(client_session: ClientSession):
 
 async def test_get_latest_item_metas(mocker: MockFixture, client_session):
     posts = [
+        {"post": {"post_id": "42", "created_at": 1645564944}, "last_modify_time": 0},
         {
-            'post': {
-                'post_id': '42',
-                'created_at': 1645564944
-            },
-            'last_modify_time': 0
-        },
-        {
-            'post': {
-                'post_id': '41',
-                'created_at': 1645564942
-            },
-            'last_modify_time': 1645564943
+            "post": {"post_id": "41", "created_at": 1645564942},
+            "last_modify_time": 1645564943,
         },
     ]
 
     mocked_news_list = mocker.patch(
-        'hoyolabrssfeeds.hoyolab.HoyolabNews.get_news_list',
+        "hoyolabrssfeeds.hoyolab.HoyolabNews.get_news_list",
         spec=True,
-        return_value=posts
+        return_value=posts,
     )
 
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
-    metas = await api.get_latest_item_metas(client_session, models.FeedItemCategory.INFO, 2)
+    metas = await api.get_latest_item_metas(
+        client_session, models.FeedItemCategory.INFO, 2
+    )
 
     expected = [
-        models.FeedItemMeta(id=42, last_modified=datetime.fromtimestamp(1645564944, tz=timezone.utc)),
-        models.FeedItemMeta(id=41, last_modified=datetime.fromtimestamp(1645564943, tz=timezone.utc)),
+        models.FeedItemMeta(
+            id=42, last_modified=datetime.fromtimestamp(1645564944, tz=timezone.utc)
+        ),
+        models.FeedItemMeta(
+            id=41, last_modified=datetime.fromtimestamp(1645564943, tz=timezone.utc)
+        ),
     ]
 
     mocked_news_list.assert_awaited()
@@ -122,30 +117,24 @@ async def test_get_latest_item_metas(mocker: MockFixture, client_session):
     assert metas == expected
 
 
-async def test_get_feed_item(mocker: MockFixture, feed_item: models.FeedItem, client_session):
+async def test_get_feed_item(
+    mocker: MockFixture, feed_item: models.FeedItem, client_session
+):
     post = {
-        'post': {
-            'post_id': str(feed_item.id),
-            'subject': feed_item.title,
-            'content': feed_item.content,
-            'official_type': feed_item.category.value,
-            'created_at': int(feed_item.published.timestamp())
+        "post": {
+            "post_id": str(feed_item.id),
+            "subject": feed_item.title,
+            "content": feed_item.content,
+            "official_type": feed_item.category.value,
+            "created_at": int(feed_item.published.timestamp()),
         },
-        'user': {
-            'nickname': feed_item.author
-        },
-        'last_modify_time': int(feed_item.updated.timestamp()),
-        'image_list': [
-            {
-                'url': str(feed_item.image)
-            }
-        ]
+        "user": {"nickname": feed_item.author},
+        "last_modify_time": int(feed_item.updated.timestamp()),
+        "image_list": [{"url": str(feed_item.image)}],
     }
 
     mocked_get_post = mocker.patch(
-        'hoyolabrssfeeds.hoyolab.HoyolabNews.get_post',
-        spec=True,
-        return_value=post
+        "hoyolabrssfeeds.hoyolab.HoyolabNews.get_post", spec=True, return_value=post
     )
 
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
@@ -159,13 +148,14 @@ async def test_get_feed_item(mocker: MockFixture, feed_item: models.FeedItem, cl
 
 # ---- HELPER FUNCTIONS ----
 
+
 def get_post_id(game: models.Game) -> int:
     post_ids = {
         models.Game.HONKAI: 4361615,
         models.Game.GENSHIN: 7156359,
         models.Game.THEMIS: 4283335,
         models.Game.STARRAIL: 3746616,
-        models.Game.ZENLESS: 4729212
+        models.Game.ZENLESS: 4729212,
     }
 
     return post_ids[game]

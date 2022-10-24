@@ -13,12 +13,12 @@ async def create_feeds():
 
 
 def main():
-    if system() == 'Windows':
+    if system() == "Windows":
         # default policy not working on windows
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     asyncio.run(create_feeds())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

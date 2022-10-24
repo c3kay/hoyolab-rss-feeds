@@ -11,7 +11,7 @@ def test_item_category_from_str(category):
 
 def test_invalid_category_str():
     with pytest.raises(ValueError):
-        models.FeedItemCategory.from_str('Invalid')
+        models.FeedItemCategory.from_str("Invalid")
 
 
 def test_game_from_str(game):
@@ -21,4 +21,4 @@ def test_game_from_str(game):
 
 def test_invalid_game_str():
     with pytest.raises(ValueError):
-        models.Game.from_str('Invalid')
+        models.Game.from_str("Invalid")

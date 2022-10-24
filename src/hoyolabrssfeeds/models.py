@@ -10,11 +10,12 @@ from typing import TypeVar
 from pydantic import BaseModel
 from pydantic import HttpUrl
 
-_IC = TypeVar('_IC', bound='FeedItemCategory')
-_G = TypeVar('_G', bound='Game')
+_IC = TypeVar("_IC", bound="FeedItemCategory")
+_G = TypeVar("_G", bound="Game")
 
 
 # --- ENUMS ---
+
 
 @unique
 class FeedItemCategory(IntEnum):
@@ -49,8 +50,8 @@ class Game(IntEnum):
 
 @unique
 class FeedType(str, Enum):
-    JSON = 'json'
-    ATOM = 'atom'
+    JSON = "json"
+    ATOM = "atom"
 
     def __str__(self):  # pragma: no cover
         return self.value
@@ -76,6 +77,7 @@ class Language(str, Enum):
 
 
 # --- PYDANTIC MODELS ---
+
 
 class FeedMeta(BaseModel):
     game: Game
