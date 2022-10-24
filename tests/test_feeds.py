@@ -15,49 +15,6 @@ from hoyolabrssfeeds.writers import AbstractFeedFileWriter
 from hoyolabrssfeeds.writers import JSONFeedFileWriter
 
 
-@pytest.fixture
-def mocked_loader(mocker: MockFixture) -> MagicMock:
-    loader = mocker.create_autospec(
-        AbstractFeedFileLoader,
-        instance=True
-    )
-    loader.get_feed_items = mocker.AsyncMock(return_value=[])
-
-    return loader
-
-
-@pytest.fixture
-def mocked_writers(mocker: MockFixture) -> List[MagicMock]:
-    writer = mocker.create_autospec(
-        AbstractFeedFileWriter,
-        instance=True
-    )
-
-    return [writer]
-
-
-@pytest.fixture
-def category_feeds(feed_item: models.FeedItem) -> List[List[models.FeedItem]]:
-    cat_feeds = []
-    for i, cat in enumerate(models.FeedItemCategory):
-        item = feed_item.copy()
-        item.id += i
-        item.category = cat
-        cat_feeds.append([item])
-
-    return cat_feeds
-
-
-@pytest.fixture
-def combined_feed(category_feeds: List[List[models.FeedItem]]) -> List[models.FeedItem]:
-    comb_feed = []
-    for item_list in category_feeds:
-        comb_feed.extend(item_list)
-    comb_feed.sort(key=lambda x: x.id, reverse=True)
-
-    return comb_feed
-
-
 def test_game_feed_was_updated(
         feed_meta: models.FeedMeta,
         mocked_writers: List[MagicMock],
@@ -106,7 +63,7 @@ def test_create_from_invalid_config(json_path: Path, feed_meta: models.FeedMeta)
     writer_config = models.FeedFileWriterConfig(feed_type='invalid', path=json_path)
     invalid_config = models.FeedConfig(feed_meta=feed_meta, writer_configs=[writer_config])
 
-    with pytest.raises(errors.ConfigError):
+    with pytest.raises(errors.ConfigFormatError):
         feeds.GameFeed.from_config(invalid_config)
 
 
@@ -141,7 +98,11 @@ async def test_category_feed_new_item(
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
-    updated_feed = await game_feed._update_category_feed(client_session, models.FeedItemCategory.INFO, [feed_item])
+    updated_feed = await game_feed._update_category_feed(
+        client_session,
+        models.FeedItemCategory.INFO,
+        [feed_item]
+    )
 
     mocked_metas.assert_awaited()
     mocked_metas.assert_called_once()
@@ -168,7 +129,7 @@ async def test_category_feed_updated_item(
     feed_meta.category_size = 2
 
     updated_item = feed_item.copy()
-    updated_item.updated = datetime.now()
+    updated_item.updated = datetime.now().astimezone()
 
     other_item = feed_item.copy()
     other_item.id += 1
@@ -189,8 +150,11 @@ async def test_category_feed_updated_item(
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
-    updated_feed = await game_feed._update_category_feed(client_session, models.FeedItemCategory.INFO,
-                                                         [other_item, feed_item])
+    updated_feed = await game_feed._update_category_feed(
+        client_session,
+        models.FeedItemCategory.INFO,
+        [other_item, feed_item]
+    )
 
     mocked_metas.assert_awaited()
     mocked_metas.assert_called_once()
@@ -227,7 +191,11 @@ async def test_category_feed_unchanged(
     )
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
-    updated_feed = await game_feed._update_category_feed(client_session, models.FeedItemCategory.INFO, [feed_item])
+    updated_feed = await game_feed._update_category_feed(
+        client_session,
+        models.FeedItemCategory.INFO,
+        [feed_item]
+    )
 
     mocked_metas.assert_awaited()
     mocked_metas.assert_called_once()
@@ -236,13 +204,11 @@ async def test_category_feed_unchanged(
 
     assert not game_feed.was_updated
 
-    # feed is sorted by ids even if an item was updated
     assert updated_feed == [feed_item]
 
 
 async def test_create_feed(
         mocker: MockFixture,
-        client_session: ClientSession,
         feed_meta: models.FeedMeta,
         mocked_writers: List[MagicMock],
         mocked_loader: MagicMock,
@@ -264,7 +230,8 @@ async def test_create_feed(
 
     game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
 
-    await game_feed.create_feed(client_session)
+    # no client session given to test local session in method
+    await game_feed.create_feed()
 
     mocked_loader.get_feed_items.assert_awaited()
     mocked_loader.get_feed_items.assert_called_once()
@@ -310,21 +277,25 @@ async def test_create_feed_unchanged(
         writer.write_feed.assert_not_called()
 
 
-def test_create_collection_from_config(feed_config: models.FeedConfig):
+def test_create_collection_from_config(
+        feed_config: models.FeedConfig,
+        feed_config_no_loader: models.FeedConfig
+):
     # NOTE: there is currently no check for identical paths of multiple game feeds
-    configs = [feed_config, feed_config]
+    configs = [feed_config, feed_config_no_loader]
 
     collection = feeds.GameFeedCollection.from_configs(configs)
 
     assert len(collection._game_feeds) == len(configs)
 
-    for feed in collection._game_feeds:
-        assert feed._feed_meta == feed_config.feed_meta
+    for feed, config in zip(collection._game_feeds, configs):
+        assert feed._feed_meta == config.feed_meta
 
-        writer_configs = [writer.config for writer in feed._feed_writers]
-        assert writer_configs == feed_config.writer_configs
+        writer_configs = [w.config for w in feed._feed_writers]
+        assert writer_configs == config.writer_configs
 
-        assert feed._feed_loader.config == feed_config.loader_config
+        if config.loader_config is not None:
+            assert feed._feed_loader.config == config.loader_config
 
 
 def test_create_collection_from_invalid_config(
@@ -337,13 +308,12 @@ def test_create_collection_from_invalid_config(
 
     configs = [feed_config, invalid_config]
 
-    with pytest.raises(errors.ConfigError):
+    with pytest.raises(errors.ConfigFormatError):
         feeds.GameFeedCollection.from_configs(configs)
 
 
 async def test_create_feed_collections(
         mocker: MockFixture,
-        client_session: ClientSession,
         feed_meta: models.FeedMeta,
         mocked_writers: List[MagicMock],
         mocked_loader: MagicMock
@@ -359,6 +329,20 @@ async def test_create_feed_collections(
         [mocked_loader, mocked_loader]
     )
 
-    await collection.create_feeds(client_session)
+    await collection.create_feeds()
 
-    mocked_create.assert_called_with(client_session)
+    mocked_create.assert_awaited()
+    mocked_create.assert_called()
+
+
+async def test_invalid_feed_collection(
+        feed_meta: models.FeedMeta,
+        mocked_writers: List[MagicMock],
+        mocked_loader: MagicMock
+):
+    with pytest.raises(ValueError):
+        feeds.GameFeedCollection(
+            [feed_meta, feed_meta],
+            [mocked_writers],
+            [mocked_loader, mocked_loader, mocked_loader]
+        )

@@ -1,17 +1,22 @@
 class HoyolabRssFeedsBaseError(Exception):
     """Base Error for this package."""
-    pass
 
 
-class ConfigError(HoyolabRssFeedsBaseError):
-    """Error for invalid configuration."""
-    pass
-
-
-class HoyolabApiError(HoyolabRssFeedsBaseError):
-    """Error while interacting with Hoyolab API."""
-    pass
+class ConfigIOError(HoyolabRssFeedsBaseError):
+    """Raised if an IO operation on a config file failed."""
 
 
 class FeedIOError(HoyolabRssFeedsBaseError):
-    """Feed IO errors."""
+    """Raised if an IO operation on a feed file failed."""
+
+
+class HoyolabApiError(HoyolabRssFeedsBaseError):
+    """Raised if interaction with the Hoyolab API failed."""
+
+
+class ConfigFormatError(HoyolabRssFeedsBaseError):
+    """Raised if an invalid config syntax or value is found."""
+
+
+class FeedFormatError(HoyolabRssFeedsBaseError):
+    """Raised if an invalid feed syntax or value is found."""

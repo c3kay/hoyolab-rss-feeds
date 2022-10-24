@@ -10,6 +10,7 @@ from typing import TypeVar
 import aiofiles
 import pydantic
 
+from .errors import FeedFormatError
 from .errors import FeedIOError
 from .models import FeedFileConfig
 from .models import FeedItem
@@ -38,7 +39,7 @@ class AbstractFeedFileLoader(metaclass=ABCMeta):
 
 
 class FeedFileLoaderFactory:
-    """Factory for creating specific FeedFileLoaders."""
+    """Factory for creating specific feed loaders."""
 
     def __init__(self) -> None:
         self._loaders = {
@@ -65,7 +66,7 @@ class FeedFileLoaderFactory:
         try:
             loader = self._loaders[config.feed_type](config)
         except KeyError as err:
-            raise ValueError('No loader registered for "{}"'.format(config.feed_type)) from err
+            raise ValueError('No loader registered for "{}"!'.format(config.feed_type)) from err
 
         return loader
 
@@ -109,9 +110,9 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
 
                     feed_items.append(item_dict)
             except KeyError as err:
-                raise FeedIOError('Could not find required key in JSON feed!') from err
+                raise FeedFormatError('Could not find required key in JSON feed!') from err
             except ValueError as err:
-                raise FeedIOError('Found unexpected value in JSON feed!') from err
+                raise FeedFormatError('Found unexpected value in JSON feed!') from err
 
             return pydantic.parse_obj_as(List[FeedItem], feed_items)
         else:
@@ -128,6 +129,6 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
         except IOError as err:
             raise FeedIOError('Could not read JSON file from "{}"!'.format(self._config.path)) from err
         except json.JSONDecodeError as err:
-            raise FeedIOError('Could not decode JSON file!') from err
+            raise FeedFormatError('Could not decode JSON file!') from err
 
         return feed

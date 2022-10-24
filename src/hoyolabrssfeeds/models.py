@@ -10,8 +10,8 @@ from typing import TypeVar
 from pydantic import BaseModel
 from pydantic import HttpUrl
 
-IC = TypeVar('IC', bound='FeedItemCategory')
-G = TypeVar('G', bound='Game')
+_IC = TypeVar('_IC', bound='FeedItemCategory')
+_G = TypeVar('_G', bound='Game')
 
 
 # --- ENUMS ---
@@ -23,7 +23,7 @@ class FeedItemCategory(IntEnum):
     INFO = 3
 
     @classmethod
-    def from_str(cls: Type[IC], category_str: str) -> IC:
+    def from_str(cls: Type[_IC], category_str: str) -> _IC:
         try:
             return cls[category_str.upper()]
         except KeyError as err:
@@ -40,7 +40,7 @@ class Game(IntEnum):
     ZENLESS = 8
 
     @classmethod
-    def from_str(cls: Type[G], game_str: str) -> G:
+    def from_str(cls: Type[_G], game_str: str) -> _G:
         try:
             return cls[game_str.upper()]
         except KeyError as err:
@@ -52,7 +52,7 @@ class FeedType(str, Enum):
     JSON = 'json'
     ATOM = 'atom'
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return self.value
 
 
@@ -71,7 +71,7 @@ class Language(str, Enum):
     THAI = "th-th"
     VIETNAMESE = "vi-vn"
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return self.value
 
 

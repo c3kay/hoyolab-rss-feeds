@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 from typing import Dict
 from typing import List
 
@@ -43,16 +42,14 @@ class HoyolabNews:
         try:
             async with session.get(url, headers=headers, params=params) as response:
                 response.raise_for_status()
-                response_json = await response.json(encoding='utf-8')
+                response_json = await response.json()
 
             if response_json['retcode'] != 0:
                 # the message might be in chinese
                 raise HoyolabApiError(response_json['message'])
-        except JSONDecodeError as err:
-            raise HoyolabApiError('Could not decode JSON response!') from err
         except aiohttp.ContentTypeError as err:
-            raise HoyolabApiError('Could not decode JSON response!') from err
-        except aiohttp.ClientError as err:  # base exception for aiohttp
+            raise HoyolabApiError('Could not decode response to JSON!') from err
+        except aiohttp.ClientResponseError as err:
             raise HoyolabApiError('Could not request Hoyolab endpoint!') from err
         except KeyError as err:
             raise HoyolabApiError('Unexpected response!') from err

@@ -7,7 +7,7 @@ from typing import TypeVar
 
 import aiohttp
 
-from .errors import ConfigError
+from .errors import ConfigFormatError
 from .hoyolab import HoyolabNews
 from .loaders import FeedFileLoaderFactory
 from .loaders import L
@@ -18,8 +18,9 @@ from .models import FeedMeta
 from .writers import FeedFileWriterFactory
 from .writers import W
 
-GF = TypeVar('GF', bound='GameFeed')
-GFC = TypeVar('GFC', bound='GameFeedCollection')
+# used for classmethods
+_GF = TypeVar('_GF', bound='GameFeed')
+_GFC = TypeVar('_GFC', bound='GameFeedCollection')
 
 
 class GameFeed:
@@ -48,7 +49,7 @@ class GameFeed:
         return self._was_updated
 
     @classmethod
-    def from_config(cls: Type[GF], feed_config: FeedConfig) -> GF:
+    def from_config(cls: Type[_GF], feed_config: FeedConfig) -> _GF:
         """Create an instance via a feed config."""
 
         try:
@@ -64,7 +65,7 @@ class GameFeed:
             else:
                 loader = loader_factory.create_any_loader(writers)
         except ValueError as err:
-            raise ConfigError('Could not create game feed from config!') from err
+            raise ConfigFormatError('Could not create game feed from config!') from err
 
         return cls(feed_config.feed_meta, writers, loader)
 
@@ -172,7 +173,7 @@ class GameFeedCollection:
         ]
 
     @classmethod
-    def from_configs(cls: Type[GFC], feed_configs: List[FeedConfig]) -> GFC:
+    def from_configs(cls: Type[_GFC], feed_configs: List[FeedConfig]) -> _GFC:
         """Create an instance via feed configs."""
 
         metas = []
@@ -196,7 +197,7 @@ class GameFeedCollection:
                 else:
                     loaders.append(loader_factory.create_any_loader(writers_configs))
         except ValueError as err:
-            raise ConfigError('Could not create game feed collection from configs!') from err
+            raise ConfigFormatError('Could not create game feed collection from configs!') from err
 
         return cls(metas, writers, loaders)
 

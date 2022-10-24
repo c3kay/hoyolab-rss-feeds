@@ -15,25 +15,6 @@ from .conftest import validate_hoyolab_post
 langdetect.DetectorFactory.seed = 42
 
 
-# ---- FIXTURES ----
-
-@pytest.fixture(params=[g for g in models.Game])
-def game(request) -> models.Game:
-    return request.param
-
-
-@pytest.fixture(params=[c for c in models.FeedItemCategory])
-def category(request) -> models.FeedItemCategory:
-    return request.param
-
-
-@pytest.fixture(params=[la for la in models.Language])
-def language(request) -> models.Language:
-    return request.param
-
-
-# ---- TESTS ----
-
 async def test_api_post_endpoint(client_session: ClientSession, game: models.Game):
     post_id = get_post_id(game)
     api = hoyolab.HoyolabNews(game)
@@ -86,7 +67,7 @@ async def test_request_errors(client_session: ClientSession):
     with pytest.raises(errors.HoyolabApiError, match='Could not request'):
         await api._request(client_session, {}, error_url)
 
-    # json decode error
+    # decode error
     error_url = 'https://httpbin.org/html'
     with pytest.raises(errors.HoyolabApiError, match='Could not decode'):
         await api._request(client_session, {}, error_url)
@@ -99,6 +80,7 @@ async def test_request_errors(client_session: ClientSession):
     # hoyolab error code
     error_url = 'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList'
     with pytest.raises(errors.HoyolabApiError):
+        # missing params raise exception here
         await api._request(client_session, {}, error_url)
 
 
@@ -135,7 +117,7 @@ async def test_get_latest_item_metas(mocker: MockFixture, client_session):
     ]
 
     mocked_news_list.assert_awaited()
-    mocked_news_list.assert_called_with(models.FeedItemCategory.INFO, 2, client_session)
+    mocked_news_list.assert_called()
 
     assert metas == expected
 
@@ -170,7 +152,7 @@ async def test_get_feed_item(mocker: MockFixture, feed_item: models.FeedItem, cl
     fetched_item = await api.get_feed_item(client_session, feed_item.id)
 
     mocked_get_post.assert_awaited()
-    mocked_get_post.assert_called_with(feed_item.id, client_session)
+    mocked_get_post.assert_called()
 
     assert fetched_item == feed_item
 
@@ -187,4 +169,3 @@ def get_post_id(game: models.Game) -> int:
     }
 
     return post_ids[game]
-

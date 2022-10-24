@@ -1,11 +1,14 @@
 import json
 from pathlib import Path
+from platform import system
+from stat import S_IREAD
 from typing import List
 
 import aiofiles
 import atoma
 import pytest
 
+from hoyolabrssfeeds import errors
 from hoyolabrssfeeds import models
 from hoyolabrssfeeds import writers
 
@@ -79,6 +82,20 @@ async def test_json_feed_writer(
     assert feed.title == feed_meta.title
 
 
+@pytest.mark.skipif(system() == 'Windows', reason='Currently not working on Windows')
+async def test_write_json_feed_io_error(
+        json_feed_file_writer_config: models.FeedFileWriterConfig,
+        feed_meta: models.FeedMeta
+):
+    writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
+
+    # read-only file
+    writer.config.path.touch(S_IREAD)
+
+    with pytest.raises(errors.FeedIOError):
+        await writer.write_feed(feed_meta, [])
+
+
 def test_atom_feed_writer_config(atom_feed_file_writer_config: models.FeedFileWriterConfig):
     writer = writers.JSONFeedFileWriter(atom_feed_file_writer_config)
 
@@ -103,3 +120,17 @@ async def test_atom_feed_writer(
 
     assert len(feed.entries) == len(feed_item_list)
     assert feed.title.value == feed_meta.title
+
+
+@pytest.mark.skipif(system() == 'Windows', reason='Currently not working on Windows')
+async def test_write_atom_feed_io_error(
+        atom_feed_file_writer_config: models.FeedFileWriterConfig,
+        feed_meta: models.FeedMeta
+):
+    writer = writers.AtomFeedFileWriter(atom_feed_file_writer_config)
+
+    # read-only file
+    writer.config.path.touch(S_IREAD)
+
+    with pytest.raises(errors.FeedIOError):
+        await writer.write_feed(feed_meta, [])

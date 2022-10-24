@@ -39,7 +39,7 @@ class AbstractFeedFileWriter(metaclass=ABCMeta):
 
 
 class FeedFileWriterFactory:
-    """Factory for creating specific FeedFileWriters."""
+    """Factory for creating specific feed writers."""
 
     def __init__(self) -> None:
         self._writers = {
@@ -93,14 +93,10 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
         feed['items'] = [self.create_json_feed_item(item) for item in feed_items]
 
         try:
-            feed_json = json.dumps(feed)
-
             async with aiofiles.open(self._config.path, 'w', encoding='utf-8') as fd:
-                await fd.write(feed_json)
+                await fd.write(json.dumps(feed))
         except IOError as err:
             raise FeedIOError('Could not write JSON file to "{}"!'.format(self._config.path)) from err
-        except TypeError as err:
-            raise FeedIOError('Could not parse feed to JSON!') from err
 
     @staticmethod
     def create_json_feed_item(item: FeedItem) -> Dict:
