@@ -57,6 +57,9 @@ dev = [
 "Homepage" = "https://github.com/c3kay/hoyolab-rss-feeds"
 "Issue Tracker" = "https://github.com/c3kay/hoyolab-rss-feeds/issues"
 
+[project.scripts]
+hoyolab-rss-feeds = "hoyolabrssfeeds.__main__:cli"
+
 # infer version from git
 [tool.setuptools_scm]
 

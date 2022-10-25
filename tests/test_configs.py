@@ -1,12 +1,13 @@
-from os import environ
 from pathlib import Path
 from platform import system
 from stat import S_IWRITE
+from stat import S_IREAD
 from typing import Dict
 
 import aiofiles
 import pytest
 import pytest_mock
+import tomli
 
 from hoyolabrssfeeds import configs
 from hoyolabrssfeeds import errors
@@ -15,29 +16,25 @@ from hoyolabrssfeeds import models
 
 def test_config_paths(config_path: Path):
     param_config = configs.FeedConfigLoader(config_path)
-    assert param_config._path == config_path
+    assert param_config.path == config_path
 
-    environ["HRF_CONFIG_PATH"] = str(config_path)
-    env_config = configs.FeedConfigLoader()
-    assert env_config._path == config_path
-    del environ["HRF_CONFIG_PATH"]
-
-    fallback_path = Path.home() / Path(".hoyolab-rss-feeds.toml")
     fallback_config = configs.FeedConfigLoader()
-    assert fallback_config._path == fallback_path
+    assert fallback_config.path == Path("hoyolab-rss-feeds.toml")
 
 
 async def test_load_toml_file(config_path: Path):
     loader = configs.FeedConfigLoader(config_path)
 
     toml_str = """
-        [genshin]
-        key = 'value'
+    [genshin]
+    key = 'value'
     """
 
     expected = {"genshin": {"key": "value"}}
 
-    await _write_file(config_path, toml_str)
+    async with aiofiles.open(config_path, "w") as fd:
+        await fd.write(toml_str)
+
     config_dict = await loader._load_from_file()
 
     assert config_dict == expected
@@ -46,26 +43,58 @@ async def test_load_toml_file(config_path: Path):
 async def test_invalid_toml_file(config_path: Path):
     loader = configs.FeedConfigLoader(config_path)
 
-    await _write_file(config_path, "{Invalid}")
+    async with aiofiles.open(config_path, "w") as fd:
+        await fd.write("{Invalid}")
 
     with pytest.raises(errors.ConfigFormatError, match="Could not parse"):
         await loader._load_from_file()
 
 
-async def test_no_game_section(config_path: Path):
+async def test_empty_toml_file(config_path: Path):
     loader = configs.FeedConfigLoader(config_path)
 
-    await _write_file(config_path, 'key = "val"')
+    config_path.touch()
 
     with pytest.raises(errors.ConfigFormatError, match="Could not find"):
         await loader._load_from_file()
+
+
+async def test_default_toml_file(config_path: Path):
+    loader = configs.FeedConfigLoader(config_path)
+
+    await loader.create_default_config_file()
+
+    assert config_path.exists()
+
+    async with aiofiles.open(config_path, "r") as fd:
+        toml_str = await fd.read()
+
+    default_config = tomli.loads(toml_str)
+
+    expected = {
+        "category_size": 5,
+        "genshin": {"file": {"json": {"path": "genshin.json"}}},
+    }
+
+    assert default_config == expected
+
+
+@pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
+async def test_default_toml_file_io_error(config_path: Path):
+    loader = configs.FeedConfigLoader(config_path)
+
+    # create read-only file
+    config_path.touch(S_IREAD)
+
+    with pytest.raises(errors.ConfigIOError, match="Could not create"):
+        await loader.create_default_config_file()
 
 
 @pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
 async def test_load_toml_file_io_error(config_path: Path):
     loader = configs.FeedConfigLoader(config_path)
 
-    # create write only file
+    # create write-only file
     config_path.touch(S_IWRITE)
 
     with pytest.raises(errors.ConfigIOError, match="Could not open"):
@@ -124,11 +153,3 @@ def test_create_invalid_feed_config():
         loader._create_feed_config(
             models.Game.GENSHIN, {"genshin": {"file": {"Invalid": {}}}}
         )
-
-
-# ---- HELPER FUNCTIONS ----
-
-
-async def _write_file(path: Path, content: str):
-    async with aiofiles.open(path, "w") as fd:
-        await fd.write(content)

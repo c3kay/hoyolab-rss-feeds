@@ -1,4 +1,3 @@
-from os import getenv
 from pathlib import Path
 from typing import Dict
 from typing import List
@@ -17,14 +16,18 @@ from .models import Game
 
 
 class FeedConfigLoader:
-    """TOML file config loader."""
+    """TOML config file loader."""
 
     def __init__(self, config_path: Optional[Path] = None):
-        fallback_path = Path("~/.hoyolab-rss-feeds.toml").expanduser()
-        self._path = config_path or Path(getenv("HRF_CONFIG_PATH", fallback_path))
+        self._path = config_path or Path("hoyolab-rss-feeds.toml")
+
+    @property
+    def path(self) -> Path:
+        """TOML config file path."""
+        return self._path
 
     async def _load_from_file(self) -> Dict:
-        """Load and parse config from TOML file"""
+        """Load and parse config from TOML file."""
 
         try:
             async with aiofiles.open(self._path, "r") as fd:
@@ -91,3 +94,16 @@ class FeedConfigLoader:
             for key in config.keys()
             if key in {g.name.lower() for g in Game}
         ]
+
+    async def create_default_config_file(self) -> None:
+        """Create an initial example config file."""
+
+        toml_str = 'category_size=5\n\n[genshin]\nfile.json.path="genshin.json"'
+
+        try:
+            async with aiofiles.open(self._path, "w") as fd:
+                await fd.write(toml_str)
+        except IOError as err:
+            raise ConfigIOError(
+                'Could not create default config file at "{}"!'.format(self._path)
+            ) from err
