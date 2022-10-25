@@ -230,7 +230,7 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
     def _append_text_node(
         self, parent: minidom.Element, name: str, text: str, attr: Optional[Dict] = None
     ) -> None:
-        """Create XML element with text and optional attributes. Append to given element."""
+        """Create XML element with text and optional attributes."""
 
         node = self._doc.createElement(name)
         node.appendChild(self._doc.createTextNode(text))
