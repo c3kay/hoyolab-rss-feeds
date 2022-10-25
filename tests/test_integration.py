@@ -1,25 +1,36 @@
+import asyncio
+from pathlib import Path
+
 import aiofiles
+from aiohttp import ClientSession
 
 import hoyolabrssfeeds as hrf
-from aiohttp import ClientSession
-from pathlib import Path
 
 
 async def test_single_feed(client_session: ClientSession, tmp_path: Path):
     config_path = await _write_config(tmp_path)
     config_loader = hrf.configs.FeedConfigLoader(config_path)
     game_config = await config_loader.get_feed_config(hrf.models.Game.GENSHIN)
-
-    known_paths = []
-    for w in game_config.writer_configs:
-        w.path = tmp_path / w.path.name
-        known_paths.append(w.path)
+    known_paths = [w.path for w in game_config.writer_configs]
 
     game_feed = hrf.feeds.GameFeed.from_config(game_config)
+
+    # initial creation
     await game_feed.create_feed(client_session)
 
     for path in known_paths:
         assert path.exists()
+
+    # save modification timestamps
+    m_times = [p.stat().st_mtime for p in known_paths]
+
+    await asyncio.sleep(1)
+
+    # feed update
+    await game_feed.create_feed(client_session)
+
+    # feeds should not have changed after update
+    assert m_times == [p.stat().st_mtime for p in known_paths]
 
 
 async def test_feed_collection(client_session: ClientSession, tmp_path: Path):
