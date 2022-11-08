@@ -4,11 +4,10 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Set
 from typing import Type
 from typing import TypeVar
-from xml.dom import minidom
+from xml.etree import ElementTree
 
 import aiofiles
 
@@ -132,31 +131,27 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
 class AtomFeedFileWriter(AbstractFeedFileWriter):
     """Export feed as Atom format (https://validator.w3.org/feed/docs/atom.html)."""
 
-    def __init__(self, config: FeedFileWriterConfig) -> None:
-        super().__init__(config)
-        self._doc: minidom.Document = minidom.getDOMImplementation().createDocument(
-            None, "feed", None
-        )
-
     async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]) -> None:
         """Write feed to Atom file."""
 
-        root = self._doc.documentElement
+        # this is a workaround to avoid dealing with namespaces...
+        meta_params = {
+            "xmlns": "http://www.w3.org/2005/Atom",
+            "xml:lang": str(feed_meta.language),
+        }
 
-        # workaround...
-        root.setAttribute("xmlns", "http://www.w3.org/2005/Atom")
-        root.setAttribute("xml:lang", str(feed_meta.language))
+        root = ElementTree.Element("feed", meta_params)
 
-        self._append_text_node(
-            root, "id", "tag:hoyolab.com,2021:/official/{}".format(feed_meta.game)
-        )
-        self._append_text_node(
-            root,
-            "title",
-            feed_meta.title or "{} News".format(feed_meta.game.name.title()),
-        )
-        self._append_text_node(root, "updated", datetime.now().astimezone().isoformat())
-        self._append_attr_node(
+        id_str = "tag:hoyolab.com,2021:/official/{}".format(feed_meta.game)
+        ElementTree.SubElement(root, "id").text = id_str
+
+        title_str = feed_meta.title or "{} News".format(feed_meta.game.name.title())
+        ElementTree.SubElement(root, "title").text = title_str
+
+        updated_str = datetime.now().astimezone().isoformat()
+        ElementTree.SubElement(root, "updated").text = updated_str
+
+        ElementTree.SubElement(
             root,
             "link",
             {
@@ -166,87 +161,77 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
             },
         )
 
-        if self._config.url:
-            self._append_attr_node(
+        if self.config.url:
+            ElementTree.SubElement(
                 root,
                 "link",
                 {
-                    "href": self._config.url,
+                    "href": self.config.url,
                     "rel": "self",
                     "type": "application/atom+xml",
                 },
             )
 
         if feed_meta.icon:
-            self._append_text_node(root, "icon", feed_meta.icon)
+            ElementTree.SubElement(root, "icon").text = feed_meta.icon
 
-        for item in feed_items:
-            entry = self.create_atom_feed_item(item)
-            root.appendChild(entry)
+        entries = self.create_atom_feed_entries(feed_items)
+        root.extend(entries)
+
+        xml_bytes = ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
 
         try:
-            async with aiofiles.open(self._config.path, "w", encoding="utf-8") as fd:
-                await fd.write(self._doc.toxml())
+            async with aiofiles.open(self.config.path, "wb") as fd:
+                await fd.write(xml_bytes)
         except IOError as err:
             raise FeedIOError(
-                'Could not write Atom file to "{}"!'.format(self._config.path)
+                'Could not write Atom file to "{}"!'.format(self.config.path)
             ) from err
 
-    def create_atom_feed_item(self, item: FeedItem) -> minidom.Element:
-        """Convert FeedItem to Atom entry."""
+    @staticmethod
+    def create_atom_feed_entries(
+        feed_items: List[FeedItem],
+    ) -> List[ElementTree.Element]:
+        """Create Atom feed entries from given feed items."""
 
-        entry = self._doc.createElement("entry")
+        entries = []
 
-        published_day = item.published.astimezone().date().isoformat()
-        updated = item.updated or item.published
+        for item in feed_items:
+            entry = ElementTree.Element("entry")
 
-        self._append_text_node(
-            entry, "id", "tag:hoyolab.com,{}:{}".format(published_day, item.id)
-        )
-        self._append_text_node(entry, "title", item.title)
-        self._append_attr_node(
-            entry,
-            "link",
-            {
-                "href": "https://www.hoyolab.com/article/{}".format(item.id),
-                "rel": "alternate",
-                "type": "text/html",
-            },
-        )
-        self._append_attr_node(entry, "category", {"term": item.category.name.title()})
-        self._append_text_node(
-            entry, "published", item.published.astimezone().isoformat()
-        )
-        self._append_text_node(entry, "updated", updated.astimezone().isoformat())
+            published_day = item.published.astimezone().date().isoformat()
+            id_str = "tag:hoyolab.com,{}:{}".format(published_day, item.id)
+            ElementTree.SubElement(entry, "id").text = id_str
 
-        author_el = self._doc.createElement("author")
-        self._append_text_node(author_el, "name", item.author)
-        entry.appendChild(author_el)
+            ElementTree.SubElement(entry, "title").text = item.title
 
-        self._append_text_node(entry, "content", item.content, attr={"type": "html"})
+            ElementTree.SubElement(
+                entry,
+                "link",
+                {
+                    "href": "https://www.hoyolab.com/article/{}".format(item.id),
+                    "rel": "alternate",
+                    "type": "text/html",
+                },
+            )
 
-        return entry
+            ElementTree.SubElement(
+                entry, "category", {"term": item.category.name.title()}
+            )
 
-    def _append_text_node(
-        self, parent: minidom.Element, name: str, text: str, attr: Optional[Dict] = None
-    ) -> None:
-        """Create XML element with text and optional attributes."""
+            published_str = item.published.astimezone().isoformat()
+            ElementTree.SubElement(entry, "published").text = published_str
 
-        node = self._doc.createElement(name)
-        node.appendChild(self._doc.createTextNode(text))
+            updated_str = (item.updated or item.published).astimezone().isoformat()
+            ElementTree.SubElement(entry, "updated").text = updated_str
 
-        if attr:
-            for key, val in attr.items():
-                node.setAttribute(key, val)
+            author = ElementTree.SubElement(entry, "author")
+            ElementTree.SubElement(author, "name").text = item.author
 
-        parent.appendChild(node)
+            ElementTree.SubElement(
+                entry, "content", {"type": "html"}
+            ).text = item.content
 
-    def _append_attr_node(self, parent: minidom.Element, name: str, attr: Dict) -> None:
-        """Create XML element with only attributes and append to given element."""
+            entries.append(entry)
 
-        node = self._doc.createElement(name)
-
-        for key, val in attr.items():
-            node.setAttribute(key, val)
-
-        parent.appendChild(node)
+        return entries

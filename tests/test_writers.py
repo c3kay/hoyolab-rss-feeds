@@ -13,6 +13,9 @@ from hoyolabrssfeeds import models
 from hoyolabrssfeeds import writers
 
 
+# ---- FACTORY TESTS ----
+
+
 def test_factory_feed_types():
     factory = writers.FeedFileWriterFactory()
     expected = {str(models.FeedType.JSON), str(models.FeedType.ATOM)}
@@ -52,6 +55,9 @@ def test_factory_register_duplicate_writer():
 
     with pytest.raises(ValueError):
         factory.register_writer(models.FeedType.JSON, writers.JSONFeedFileWriter)
+
+
+# ---- JSON WRITER TESTS ----
 
 
 def test_json_feed_writer_config(
@@ -98,6 +104,9 @@ async def test_write_json_feed_io_error(
         await writer.write_feed(feed_meta, [])
 
 
+# ---- ATOM WRITER TESTS ----
+
+
 def test_atom_feed_writer_config(
     atom_feed_file_writer_config: models.FeedFileWriterConfig,
 ):
@@ -120,6 +129,7 @@ async def test_atom_feed_writer(
     async with aiofiles.open(atom_feed_file_writer_config.path, "rb") as fd:
         feed_bytes = await fd.read()
 
+    # this should raise an error if feed is invalid -> indirect feed validation
     feed = atoma.parse_atom_bytes(feed_bytes)
 
     assert len(feed.entries) == len(feed_item_list)
