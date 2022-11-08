@@ -6,6 +6,7 @@ from platform import system
 from typing import Dict
 from typing import List
 from unittest.mock import MagicMock
+from xml.etree import ElementTree
 
 import aiohttp
 import pydantic
@@ -98,6 +99,11 @@ def json_feed_file_config(json_path) -> models.FeedFileConfig:
 
 
 @pytest.fixture
+def atom_feed_file_config(atom_path) -> models.FeedFileConfig:
+    return models.FeedFileConfig(feed_type=models.FeedType.ATOM, path=atom_path)
+
+
+@pytest.fixture
 def feed_config(
     feed_meta, json_feed_file_writer_config, json_feed_file_config
 ) -> models.FeedConfig:
@@ -167,6 +173,56 @@ def feed_item_list(feed_item) -> List[models.FeedItem]:
     other_item = feed_item.copy()
     other_item.id -= 1
     return [feed_item, other_item]
+
+
+@pytest.fixture
+def json_feed_items(feed_item_list) -> Dict:
+    return {
+        "items": [
+            {
+                "id": feed_item.id,
+                "url": "https://example.org",
+                "title": feed_item.title,
+                "authors": [{"name": feed_item.author}],
+                "tags": [feed_item.category.name.title()],
+                "content_html": feed_item.content,
+                "date_published": feed_item.published.astimezone().isoformat(),
+                "date_modified": feed_item.updated.astimezone().isoformat(),
+                "image": feed_item.image,
+            }
+            for feed_item in feed_item_list
+        ]
+    }
+
+
+@pytest.fixture
+def atom_feed_entries(feed_item_list) -> ElementTree.Element:
+    # omitting namespace declarations because they should be removed before
+    root = ElementTree.Element("feed")
+
+    for feed_item in feed_item_list:
+        entry = ElementTree.SubElement(root, "entry")
+
+        id_str = "tag:hoyolab.com,{}:{}".format(
+            feed_item.published.date().isoformat(), feed_item.id
+        )
+        ElementTree.SubElement(entry, "id").text = id_str
+
+        ElementTree.SubElement(entry, "title").text = feed_item.title
+        ElementTree.SubElement(entry, "content").text = feed_item.content
+        ElementTree.SubElement(
+            entry, "category", {"term": feed_item.category.name.title()}
+        )
+
+        author = ElementTree.SubElement(entry, "author")
+        ElementTree.SubElement(author, "name").text = feed_item.author
+
+        published_str = feed_item.published.astimezone().isoformat()
+        updated_str = feed_item.updated.astimezone().isoformat()
+        ElementTree.SubElement(entry, "published").text = published_str
+        ElementTree.SubElement(entry, "updated").text = updated_str
+
+    return root
 
 
 @pytest.fixture

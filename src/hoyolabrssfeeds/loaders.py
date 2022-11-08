@@ -1,11 +1,13 @@
 import json
 from abc import ABCMeta
 from abc import abstractmethod
+from datetime import datetime
 from typing import Dict
 from typing import List
 from typing import Set
 from typing import Type
 from typing import TypeVar
+from xml.etree import ElementTree
 
 import aiofiles
 import pydantic
@@ -16,6 +18,7 @@ from .models import FeedFileConfig
 from .models import FeedItem
 from .models import FeedItemCategory
 from .models import FeedType
+from .writers import JSONFeedFileWriter
 from .writers import W
 
 L = TypeVar("L", bound="AbstractFeedFileLoader")
@@ -43,8 +46,8 @@ class FeedFileLoaderFactory:
 
     def __init__(self) -> None:
         self._loaders = {
-            str(FeedType.JSON): JSONFeedFileLoader
-            # TODO: add atom loader
+            str(FeedType.JSON): JSONFeedFileLoader,
+            str(FeedType.ATOM): AtomFeedFileLoader,
         }
 
     @property
@@ -75,6 +78,14 @@ class FeedFileLoaderFactory:
         return loader
 
     def create_any_loader(self, writers: List[W]) -> L:
+        """Create a suitable loader from given writers."""
+
+        # prefer json loader if available
+        for writer in writers:
+            if isinstance(writer, JSONFeedFileWriter):
+                json_config = pydantic.parse_obj_as(FeedFileConfig, writer.config)
+                return self.create_loader(json_config)
+
         for writer in writers:
             if writer.config.feed_type in self._loaders:
                 loader_config = pydantic.parse_obj_as(FeedFileConfig, writer.config)
@@ -84,14 +95,14 @@ class FeedFileLoaderFactory:
 
 
 class JSONFeedFileLoader(AbstractFeedFileLoader):
-    """Load feed from JSON-Feed file."""
+    """Load feed from JSON-Feed format (https://www.jsonfeed.org/version/1.1/)."""
 
     async def get_feed_items(self) -> List[FeedItem]:
         """Returns feed items of JSON-Feed if feed exists."""
 
-        if self._config.path.exists():
-            feed = await self._load_from_file()
+        if self.config.path.exists():
             feed_items = []
+            feed = await self._load_from_file()
 
             try:
                 for item in feed["items"]:
@@ -113,14 +124,14 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
                         item_dict["image"] = item["image"]
 
                     feed_items.append(item_dict)
+
+                return pydantic.parse_obj_as(List[FeedItem], feed_items)
             except KeyError as err:
                 raise FeedFormatError(
                     "Could not find required key in JSON feed!"
                 ) from err
             except ValueError as err:
-                raise FeedFormatError("Found unexpected value in JSON feed!") from err
-
-            return pydantic.parse_obj_as(List[FeedItem], feed_items)
+                raise FeedFormatError("Could not load JSON feed items!") from err
         else:
             return []
 
@@ -128,15 +139,94 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
         """Load JSON-Feed from file."""
 
         try:
-            async with aiofiles.open(self._config.path, "r", encoding="utf-8") as fd:
+            async with aiofiles.open(self.config.path, "r") as fd:
                 feed_json = await fd.read()
 
             feed = json.loads(feed_json)
         except IOError as err:
             raise FeedIOError(
-                'Could not read JSON file from "{}"!'.format(self._config.path)
+                'Could not read JSON file from "{}"!'.format(self.config.path)
             ) from err
         except json.JSONDecodeError as err:
             raise FeedFormatError("Could not decode JSON file!") from err
 
         return feed
+
+
+class AtomFeedFileLoader(AbstractFeedFileLoader):
+    """Load feed from Atom format (https://validator.w3.org/feed/docs/atom.html)."""
+
+    async def get_feed_items(self) -> List[FeedItem]:
+        """Returns feed items of Atom feed if feed exists."""
+
+        if self.config.path.exists():
+            feed_items = []
+            root = await self._load_from_file()
+
+            for entry in root.findall("entry"):
+                id_str = entry.findtext("id")
+                item_id = id_str.rpartition(":")[2] if id_str is not None else None
+
+                category_node = entry.find("category")
+                try:
+                    category = (
+                        FeedItemCategory.from_str(category_node.get("term", default=""))
+                        if category_node is not None
+                        else None
+                    )
+                except ValueError as err:
+                    raise FeedFormatError("Could not load Atom feed entries!") from err
+
+                published_str = entry.findtext("published")
+                published = (
+                    datetime.fromisoformat(published_str)
+                    if published_str is not None
+                    else None
+                )
+
+                updated_str = entry.findtext("updated")
+                updated = (
+                    datetime.fromisoformat(updated_str)
+                    if updated_str is not None
+                    else None
+                )
+
+                item_dict = {
+                    "id": item_id,
+                    "title": entry.findtext("title"),
+                    "author": entry.findtext("author/name"),
+                    "content": entry.findtext("content"),
+                    "category": category,
+                    "published": published,
+                    "updated": updated,
+                }
+
+                feed_items.append(item_dict)
+
+            try:
+                return pydantic.parse_obj_as(List[FeedItem], feed_items)
+            except pydantic.ValidationError as err:
+                raise FeedFormatError("Could not load Atom feed entries!") from err
+        else:
+            return []
+
+    async def _load_from_file(self) -> ElementTree.Element:
+        """Load Atom feed from file."""
+
+        try:
+            async with aiofiles.open(self.config.path, "r") as fd:
+                feed_str = await fd.read()
+
+            # removing default namespace declaration from xml because it makes
+            # parsing MUCH easier
+            feed_str = feed_str.replace(' xmlns="http://www.w3.org/2005/Atom"', "", 1)
+
+            root = ElementTree.fromstring(feed_str)
+        except IOError as err:
+            raise FeedIOError(
+                'Could not read Atom file from "{}"!'.format(self.config.path)
+            ) from err
+        except ElementTree.ParseError as err:
+            raise FeedFormatError("Could not parse Atom file!") from err
+
+        return root

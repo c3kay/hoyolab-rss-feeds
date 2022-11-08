@@ -60,7 +60,7 @@ async def _write_config(base_tmp_path: Path):
         title = "Genshin"
 
         [honkai]
-        file.json.path = "{base}/honkai.json"
+        file.atom.path = "{base}/honkai.xml"
     """
 
     toml_config = toml_templ.format(base=base_tmp_path)
