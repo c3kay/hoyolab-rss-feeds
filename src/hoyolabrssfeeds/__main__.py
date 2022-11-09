@@ -1,7 +1,7 @@
-import asyncio
-from platform import system
 import argparse
+import asyncio
 from pathlib import Path
+from platform import system
 from typing import Optional
 
 from .configs import FeedConfigLoader
@@ -14,7 +14,9 @@ async def create_feeds(config_path: Optional[Path] = None):
 
     if not config_loader.path.exists():
         await config_loader.create_default_config_file()
-        print('Default config file created at "{}"!'.format(config_loader.path))
+        print('Default config file created at "{}"!'.format(
+            config_loader.path.resolve()
+        ))
         return
 
     feed_configs = await config_loader.get_all_feed_configs()
