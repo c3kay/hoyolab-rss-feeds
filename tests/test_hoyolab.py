@@ -15,6 +15,7 @@ from .conftest import validate_hoyolab_post
 langdetect.DetectorFactory.seed = 42
 
 
+@pytest.mark.hoyolabapi
 async def test_api_post_endpoint(client_session: ClientSession, game: models.Game):
     post_id = get_post_id(game)
     api = hoyolab.HoyolabNews(game)
@@ -23,6 +24,7 @@ async def test_api_post_endpoint(client_session: ClientSession, game: models.Gam
     validate_hoyolab_post(post, is_full_post=True)
 
 
+@pytest.mark.hoyolabapi
 async def test_api_list_endpoint(
     client_session: ClientSession, game: models.Game, category: models.FeedItemCategory
 ):
@@ -36,6 +38,7 @@ async def test_api_list_endpoint(
         validate_hoyolab_post(post, is_full_post=False)
 
 
+@pytest.mark.hoyolabapi
 @pytest.mark.xfail(reason="not accurate for all languages")
 async def test_language(client_session: ClientSession, language: models.Language):
     # NOTE: The list endpoint is not checked due to insufficient text.
@@ -57,6 +60,7 @@ async def test_language(client_session: ClientSession, language: models.Language
     assert langdetect.detect(content) == expected
 
 
+@pytest.mark.hoyolabapi
 async def test_request_errors(client_session: ClientSession):
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
 

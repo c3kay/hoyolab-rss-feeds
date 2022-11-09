@@ -55,7 +55,7 @@ dev = [
 
 [project.urls]
 "Homepage" = "https://github.com/c3kay/hoyolab-rss-feeds"
-"Issue Tracker" = "https://github.com/c3kay/hoyolab-rss-feeds/issues"
+"Tracker" = "https://github.com/c3kay/hoyolab-rss-feeds/issues"
 
 [project.scripts]
 hoyolab-rss-feeds = "hoyolabrssfeeds.__main__:cli"
@@ -65,8 +65,10 @@ hoyolab-rss-feeds = "hoyolabrssfeeds.__main__:cli"
 
 [tool.pytest.ini_options]
 addopts = "-vv --cov --cov-append --cov-report=xml --cov-report=term-missing"
-testpaths = ["tests"]
 asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = ["hoyolabapi: marker for hoyolab api tests"]
+
 
 [tool.coverage.paths]
 # https://coverage.readthedocs.io/en/6.5.0/config.html#paths
