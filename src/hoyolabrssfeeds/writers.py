@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Dict
 from typing import List
 from typing import Set
-from typing import Type
 from typing import TypeVar
 from xml.etree import ElementTree
 
@@ -42,36 +41,18 @@ class FeedFileWriterFactory:
 
     def __init__(self) -> None:
         self._writers = {
-            str(FeedType.JSON): JSONFeedFileWriter,
-            str(FeedType.ATOM): AtomFeedFileWriter,
+            FeedType.JSON: JSONFeedFileWriter,
+            FeedType.ATOM: AtomFeedFileWriter,
         }
 
     @property
-    def feed_types(self) -> Set[str]:
+    def feed_types(self) -> Set[FeedType]:
         """Set of feed types for which writers are registered."""
         return set(self._writers.keys())
 
-    def register_writer(self, feed_type: str, writer: Type[W]) -> None:
-        """Register a feed writer for a new feed type."""
-
-        if feed_type in self._writers:
-            raise ValueError(
-                'Feed writer already exists for feed type "{}"!'.format(feed_type)
-            )
-
-        self._writers[feed_type] = writer
-
     def create_writer(self, config: FeedFileWriterConfig) -> W:
         """Create a feed writer for the specified feed type."""
-
-        try:
-            writer = self._writers[config.feed_type](config)
-        except KeyError as err:
-            raise ValueError(
-                'No writer registered for "{}"!'.format(config.feed_type)
-            ) from err
-
-        return writer
+        return self._writers[config.feed_type](config)
 
 
 class JSONFeedFileWriter(AbstractFeedFileWriter):
@@ -89,8 +70,8 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
             ),
         }
 
-        if self._config.url:
-            feed["feed_url"] = str(self._config.url)
+        if self.config.url:
+            feed["feed_url"] = str(self.config.url)
 
         if feed_meta.icon:
             feed["icon"] = str(feed_meta.icon)
@@ -98,11 +79,11 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
         feed["items"] = [self.create_json_feed_item(item) for item in feed_items]
 
         try:
-            async with aiofiles.open(self._config.path, "w", encoding="utf-8") as fd:
+            async with aiofiles.open(self.config.path, "w", encoding="utf-8") as fd:
                 await fd.write(json.dumps(feed))
         except IOError as err:
             raise FeedIOError(
-                'Could not write JSON file to "{}"!'.format(self._config.path)
+                'Could not write JSON file to "{}"!'.format(self.config.path)
             ) from err
 
     @staticmethod

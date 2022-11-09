@@ -81,7 +81,7 @@ class Language(str, Enum):
 
 class FeedMeta(BaseModel):
     game: Game
-    category_size: int
+    category_size: int = 5
     language: Language = Language.ENGLISH
     title: Optional[str] = None
     icon: Optional[HttpUrl] = None
@@ -104,7 +104,7 @@ class FeedItemMeta(BaseModel):
 
 
 class FeedFileConfig(BaseModel):
-    feed_type: str  # this is str and not FeedType to allow self-defined/derived types
+    feed_type: FeedType
     path: Path
 
 

@@ -98,7 +98,7 @@ class FeedConfigLoader:
     async def create_default_config_file(self) -> None:
         """Create an initial example config file."""
 
-        toml_str = 'category_size = 5\n\n[genshin]\nfeed.json.path = "genshin.json"'
+        toml_str = '[genshin]\nfeed.json.path = "genshin.json"'
 
         try:
             async with aiofiles.open(self._path, "w") as fd:

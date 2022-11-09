@@ -71,7 +71,6 @@ async def test_default_toml_file(config_path: Path):
     default_config = tomli.loads(toml_str)
 
     expected = {
-        "category_size": 5,
         "genshin": {"feed": {"json": {"path": "genshin.json"}}},
     }
 

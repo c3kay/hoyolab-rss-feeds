@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Dict
 from typing import List
 from typing import Set
-from typing import Type
 from typing import TypeVar
 from xml.etree import ElementTree
 
@@ -46,36 +45,18 @@ class FeedFileLoaderFactory:
 
     def __init__(self) -> None:
         self._loaders = {
-            str(FeedType.JSON): JSONFeedFileLoader,
-            str(FeedType.ATOM): AtomFeedFileLoader,
+            FeedType.JSON: JSONFeedFileLoader,
+            FeedType.ATOM: AtomFeedFileLoader,
         }
 
     @property
-    def feed_types(self) -> Set[str]:
+    def feed_types(self) -> Set[FeedType]:
         """Set of feed types for which writers are registered."""
         return set(self._loaders.keys())
 
-    def register_loader(self, feed_type: str, loader: Type[L]):
-        """Register feed loader for a new feed type."""
-
-        if feed_type in self._loaders:
-            raise ValueError(
-                'Feed loader already exists for feed type "{}"!'.format(feed_type)
-            )
-
-        self._loaders[feed_type] = loader
-
     def create_loader(self, config: FeedFileConfig) -> L:
         """Create feed loader for the specified feed type."""
-
-        try:
-            loader = self._loaders[config.feed_type](config)
-        except KeyError as err:
-            raise ValueError(
-                'No loader registered for "{}"!'.format(config.feed_type)
-            ) from err
-
-        return loader
+        return self._loaders[config.feed_type](config)
 
     def create_any_loader(self, writers: List[W]) -> L:
         """Create a suitable loader from given writers."""

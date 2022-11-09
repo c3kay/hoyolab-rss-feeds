@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from platform import system
 from stat import S_IWRITE
 from typing import Dict
@@ -21,28 +20,25 @@ from hoyolabrssfeeds import writers
 
 def test_factory_feed_types():
     factory = loaders.FeedFileLoaderFactory()
-    expected = {
-        str(models.FeedType.ATOM),
-        str(models.FeedType.JSON),
-    }
+    expected = {models.FeedType.ATOM, models.FeedType.JSON}
 
     assert factory.feed_types == expected
 
 
-def test_factory_create_loader(json_feed_file_config: models.FeedFileConfig):
+def test_factory_create_loader(
+        json_feed_file_config: models.FeedFileConfig,
+        atom_feed_file_config: models.FeedFileConfig
+):
     factory = loaders.FeedFileLoaderFactory()
     json_loader = factory.create_loader(json_feed_file_config)
 
     assert issubclass(type(json_loader), loaders.AbstractFeedFileLoader)
     assert isinstance(json_loader, loaders.JSONFeedFileLoader)
 
+    atom_loader = factory.create_loader(atom_feed_file_config)
 
-def test_factory_create_invalid_loader(json_path: Path):
-    factory = loaders.FeedFileLoaderFactory()
-    invalid_config = models.FeedFileConfig(feed_type="invalid", path=json_path)
-
-    with pytest.raises(ValueError):
-        factory.create_loader(invalid_config)
+    assert issubclass(type(atom_loader), loaders.AbstractFeedFileLoader)
+    assert isinstance(atom_loader, loaders.AtomFeedFileLoader)
 
 
 def test_factory_create_any_loader(
@@ -67,27 +63,8 @@ def test_factory_create_any_loader(
 def test_factory_create_invalid_any_loader():
     factory = loaders.FeedFileLoaderFactory()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Could not create"):
         factory.create_any_loader([])
-
-
-def test_factory_register_loader(json_path: Path):
-    factory = loaders.FeedFileLoaderFactory()
-    factory.register_loader("custom", loaders.JSONFeedFileLoader)
-
-    assert "custom" in factory.feed_types
-
-    custom_config = models.FeedFileConfig(feed_type="custom", path=json_path)
-    loader = factory.create_loader(custom_config)
-
-    assert isinstance(loader, loaders.JSONFeedFileLoader)
-
-
-def test_factory_register_duplicate_loader():
-    factory = loaders.FeedFileLoaderFactory()
-
-    with pytest.raises(ValueError):
-        factory.register_loader(str(models.FeedType.JSON), loaders.JSONFeedFileLoader)
 
 
 # ---- JSON LOADER TESTS ----

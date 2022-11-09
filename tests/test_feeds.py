@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 from typing import List
 from unittest.mock import MagicMock
 
@@ -7,7 +6,6 @@ import pytest
 from aiohttp import ClientSession
 from pytest_mock import MockFixture
 
-from hoyolabrssfeeds import errors
 from hoyolabrssfeeds import feeds
 from hoyolabrssfeeds import models
 from hoyolabrssfeeds.loaders import AbstractFeedFileLoader
@@ -57,16 +55,6 @@ def test_create_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
 
     assert game_feed._feed_loader is not None
     assert issubclass(type(game_feed._feed_loader), AbstractFeedFileLoader)
-
-
-def test_create_from_invalid_config(json_path: Path, feed_meta: models.FeedMeta):
-    writer_config = models.FeedFileWriterConfig(feed_type="invalid", path=json_path)
-    invalid_config = models.FeedConfig(
-        feed_meta=feed_meta, writer_configs=[writer_config]
-    )
-
-    with pytest.raises(errors.ConfigFormatError):
-        feeds.GameFeed.from_config(invalid_config)
 
 
 async def test_category_feed_new_item(
@@ -290,20 +278,6 @@ def test_create_collection_from_config(
 
         if config.loader_config is not None:
             assert feed._feed_loader.config == config.loader_config
-
-
-def test_create_collection_from_invalid_config(
-    feed_config: models.FeedConfig, json_path: Path, feed_meta: models.FeedMeta
-):
-    writer_config = models.FeedFileWriterConfig(feed_type="invalid", path=json_path)
-    invalid_config = models.FeedConfig(
-        feed_meta=feed_meta, writer_configs=[writer_config]
-    )
-
-    configs = [feed_config, invalid_config]
-
-    with pytest.raises(errors.ConfigFormatError):
-        feeds.GameFeedCollection.from_configs(configs)
 
 
 async def test_create_feed_collections(

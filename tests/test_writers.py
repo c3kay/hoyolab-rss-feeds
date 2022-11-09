@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from platform import system
 from stat import S_IREAD
 from typing import List
@@ -18,7 +17,7 @@ from hoyolabrssfeeds import writers
 
 def test_factory_feed_types():
     factory = writers.FeedFileWriterFactory()
-    expected = {str(models.FeedType.JSON), str(models.FeedType.ATOM)}
+    expected = {models.FeedType.JSON, models.FeedType.ATOM}
 
     assert factory.feed_types == expected
 
@@ -29,32 +28,14 @@ def test_factory_create_writer(
 ):
     factory = writers.FeedFileWriterFactory()
     json_writer = factory.create_writer(json_feed_file_writer_config)
-    atom_writer = factory.create_writer(atom_feed_file_writer_config)
 
     assert issubclass(type(json_writer), writers.AbstractFeedFileWriter)
-    assert issubclass(type(atom_writer), writers.AbstractFeedFileWriter)
-
     assert isinstance(json_writer, writers.JSONFeedFileWriter)
+
+    atom_writer = factory.create_writer(atom_feed_file_writer_config)
+
+    assert issubclass(type(atom_writer), writers.AbstractFeedFileWriter)
     assert isinstance(atom_writer, writers.AtomFeedFileWriter)
-
-
-def test_factory_register_writer(json_path: Path):
-    factory = writers.FeedFileWriterFactory()
-    factory.register_writer("custom", writers.JSONFeedFileWriter)
-
-    assert "custom" in factory.feed_types
-
-    custom_config = models.FeedFileWriterConfig(feed_type="custom", path=json_path)
-    writer = factory.create_writer(custom_config)
-
-    assert isinstance(writer, writers.JSONFeedFileWriter)
-
-
-def test_factory_register_duplicate_writer():
-    factory = writers.FeedFileWriterFactory()
-
-    with pytest.raises(ValueError):
-        factory.register_writer(models.FeedType.JSON, writers.JSONFeedFileWriter)
 
 
 # ---- JSON WRITER TESTS ----

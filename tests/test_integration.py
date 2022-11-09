@@ -51,7 +51,7 @@ async def test_feed_collection(client_session: ClientSession, tmp_path: Path):
 
 async def _write_config(base_tmp_path: Path):
     toml_templ = """
-        category_size = 3
+        icon = "https://example.org"
 
         [genshin]
         feed.json.path = "{base}/genshin.json"
@@ -61,6 +61,7 @@ async def _write_config(base_tmp_path: Path):
 
         [honkai]
         feed.atom.path = "{base}/honkai.xml"
+        category_size = 3
     """
 
     toml_config = toml_templ.format(base=base_tmp_path)
