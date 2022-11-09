@@ -26,8 +26,8 @@ def test_factory_feed_types():
 
 
 def test_factory_create_loader(
-        json_feed_file_config: models.FeedFileConfig,
-        atom_feed_file_config: models.FeedFileConfig
+    json_feed_file_config: models.FeedFileConfig,
+    atom_feed_file_config: models.FeedFileConfig,
 ):
     factory = loaders.FeedFileLoaderFactory()
     json_loader = factory.create_loader(json_feed_file_config)

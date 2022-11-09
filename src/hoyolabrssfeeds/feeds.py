@@ -8,7 +8,6 @@ from datetime import datetime
 
 import aiohttp
 
-from .errors import ConfigFormatError
 from .hoyolab import HoyolabNews
 from .loaders import FeedFileLoaderFactory
 from .loaders import L
@@ -54,20 +53,17 @@ class GameFeed:
     def from_config(cls: Type[_GF], feed_config: FeedConfig) -> _GF:
         """Create an instance via a feed config."""
 
-        try:
-            writer_factory = FeedFileWriterFactory()
-            writers = [
-                writer_factory.create_writer(writer_config)
-                for writer_config in feed_config.writer_configs
-            ]
+        writer_factory = FeedFileWriterFactory()
+        writers = [
+            writer_factory.create_writer(writer_config)
+            for writer_config in feed_config.writer_configs
+        ]
 
-            loader_factory = FeedFileLoaderFactory()
-            if feed_config.loader_config:
-                loader = loader_factory.create_loader(feed_config.loader_config)
-            else:
-                loader = loader_factory.create_any_loader(writers)
-        except ValueError as err:
-            raise ConfigFormatError("Could not create game feed from config!") from err
+        loader_factory = FeedFileLoaderFactory()
+        if feed_config.loader_config:
+            loader = loader_factory.create_loader(feed_config.loader_config)
+        else:
+            loader = loader_factory.create_any_loader(writers)
 
         return cls(feed_config.feed_meta, writers, loader)
 
@@ -187,28 +183,21 @@ class GameFeedCollection:
         writers = []
         loaders = []
 
-        try:
-            for feed_config in feed_configs:
-                metas.append(feed_config.feed_meta)
+        for feed_config in feed_configs:
+            metas.append(feed_config.feed_meta)
 
-                writer_factory = FeedFileWriterFactory()
-                writers_configs = [
-                    writer_factory.create_writer(conf)
-                    for conf in feed_config.writer_configs
-                ]
-                writers.append(writers_configs)
+            writer_factory = FeedFileWriterFactory()
+            writers_configs = [
+                writer_factory.create_writer(conf)
+                for conf in feed_config.writer_configs
+            ]
+            writers.append(writers_configs)
 
-                loader_factory = FeedFileLoaderFactory()
-                if feed_config.loader_config:
-                    loaders.append(
-                        loader_factory.create_loader(feed_config.loader_config)
-                    )
-                else:
-                    loaders.append(loader_factory.create_any_loader(writers_configs))
-        except ValueError as err:
-            raise ConfigFormatError(
-                "Could not create game feed collection from configs!"
-            ) from err
+            loader_factory = FeedFileLoaderFactory()
+            if feed_config.loader_config:
+                loaders.append(loader_factory.create_loader(feed_config.loader_config))
+            else:
+                loaders.append(loader_factory.create_any_loader(writers_configs))
 
         return cls(metas, writers, loaders)
 
