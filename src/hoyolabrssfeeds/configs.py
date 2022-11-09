@@ -57,15 +57,15 @@ class FeedConfigLoader:
 
             # merge root keys into game config dict
             for key, val in config_dict.items():
-                if key not in games and key != "file":
+                if key not in games and key != "feed":
                     # only set key if not already exists
                     game_config_dict.setdefault(key, val)
 
-            file_config_dict = game_config_dict.pop("file")
+            feed_config_dict = game_config_dict.pop("feed")
 
             writer_configs = [
                 FeedFileWriterConfig(feed_type=feed_type, **feed_config)
-                for feed_type, feed_config in file_config_dict.items()
+                for feed_type, feed_config in feed_config_dict.items()
             ]
 
             feed_meta = FeedMeta(game=game, **game_config_dict)
@@ -98,7 +98,7 @@ class FeedConfigLoader:
     async def create_default_config_file(self) -> None:
         """Create an initial example config file."""
 
-        toml_str = 'category_size=5\n\n[genshin]\nfile.json.path="genshin.json"'
+        toml_str = 'category_size = 5\n\n[genshin]\nfeed.json.path = "genshin.json"'
 
         try:
             async with aiofiles.open(self._path, "w") as fd:

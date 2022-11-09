@@ -30,12 +30,11 @@ async def test_load_toml_file(config_path: Path):
     key = 'value'
     """
 
-    expected = {"genshin": {"key": "value"}}
-
     async with aiofiles.open(config_path, "w") as fd:
         await fd.write(toml_str)
 
     config_dict = await loader._load_from_file()
+    expected = {"genshin": {"key": "value"}}
 
     assert config_dict == expected
 
@@ -73,7 +72,7 @@ async def test_default_toml_file(config_path: Path):
 
     expected = {
         "category_size": 5,
-        "genshin": {"file": {"json": {"path": "genshin.json"}}},
+        "genshin": {"feed": {"json": {"path": "genshin.json"}}},
     }
 
     assert default_config == expected
@@ -151,5 +150,5 @@ def test_create_invalid_feed_config():
 
     with pytest.raises(errors.ConfigFormatError, match="Invalid config"):
         loader._create_feed_config(
-            models.Game.GENSHIN, {"genshin": {"file": {"Invalid": {}}}}
+            models.Game.GENSHIN, {"genshin": {"feed": {"Invalid": {}}}}
         )

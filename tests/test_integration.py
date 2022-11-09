@@ -54,13 +54,13 @@ async def _write_config(base_tmp_path: Path):
         category_size = 3
 
         [genshin]
-        file.json.path = "{base}/genshin.json"
-        file.json.url = "https://example.org"
-        file.atom.path = "{base}/genshin.xml"
+        feed.json.path = "{base}/genshin.json"
+        feed.json.url = "https://example.org"
+        feed.atom.path = "{base}/genshin.xml"
         title = "Genshin"
 
         [honkai]
-        file.atom.path = "{base}/honkai.xml"
+        feed.atom.path = "{base}/honkai.xml"
     """
 
     toml_config = toml_templ.format(base=base_tmp_path)

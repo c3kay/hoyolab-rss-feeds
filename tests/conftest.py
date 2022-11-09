@@ -132,7 +132,7 @@ def toml_config_dict(
         "category_size": feed_meta.category_size,
         "language": str(feed_meta.language),
         feed_meta.game.name.lower(): {
-            "file": {
+            "feed": {
                 str(models.FeedType.JSON): {
                     "path": str(json_feed_file_writer_config.path),
                     "url": str(json_feed_file_writer_config.url),
@@ -142,7 +142,7 @@ def toml_config_dict(
             "icon": str(feed_meta.icon),
         },
         models.Game.ZENLESS.name.lower(): {
-            "file": {
+            "feed": {
                 str(models.FeedType.ATOM): {
                     "path": str(atom_feed_file_writer_config.path)
                 }
