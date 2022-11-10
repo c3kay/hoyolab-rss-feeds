@@ -4,7 +4,6 @@ from typing import List
 from typing import Optional
 from typing import Type
 from typing import TypeVar
-from datetime import datetime
 
 import aiohttp
 
@@ -116,9 +115,9 @@ class GameFeed:
         """Create or update a specific category feed."""
 
         known_ids = {
-            item.id: max(
-                item.published, (item.updated or datetime.fromtimestamp(0).astimezone())
-            )
+            item.id: item.published
+            if item.updated is None
+            else max(item.published, item.updated)
             for item in category_items
             if item.category == category
         }
