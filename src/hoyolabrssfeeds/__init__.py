@@ -8,4 +8,22 @@ from . import loaders
 from . import models
 from . import writers
 
-__all__ = ["configs", "errors", "feeds", "hoyolab", "loaders", "models", "writers"]
+# quick access
+from .configs import FeedConfigLoader
+from .feeds import GameFeed
+from .feeds import GameFeedCollection
+from .models import Game
+
+__all__ = [
+    "configs",
+    "errors",
+    "feeds",
+    "hoyolab",
+    "loaders",
+    "models",
+    "writers",
+    "FeedConfigLoader",
+    "GameFeed",
+    "GameFeedCollection",
+    "Game",
+]
