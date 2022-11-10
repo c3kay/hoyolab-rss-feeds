@@ -2,17 +2,15 @@ name: Test
 
 on:
   push:
-    paths: ["**.py"]
   pull_request:
     types: [opened, reopened]
-    paths: ["**.py"]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -34,7 +32,7 @@ jobs:
         os: ["ubuntu-latest", "windows-latest"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Python ${{ matrix.py }}
         uses: actions/setup-python@v2
         with:
@@ -45,7 +43,7 @@ jobs:
           python -m pip install "tox >= 3.26.0"
       - name: Run tests via tox
         run: python -m tox
-      - name: Upload Coverage
+      - name: Upload code coverage
         uses: codecov/codecov-action@v2
 
   build:
@@ -53,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -64,6 +62,25 @@ jobs:
           python -m pip install build
       - name: Build distribution
         run: python -m build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-files
+          path: dist/*
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: TestPyPI
+      url: https://test.pypi.org/project/hoyolab-rss-feeds
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-files
+          path: dist
       - name: Publish distribution to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
