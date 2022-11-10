@@ -50,21 +50,27 @@ async def test_feed_collection(client_session: ClientSession, tmp_path: Path):
 
 
 async def _write_config(base_tmp_path: Path):
+    # NOTE: paths are single quoted to get literal paths
+    # this should avoid wrongfully escaping of windows paths
     toml_templ = """
         icon = "https://example.org"
 
         [genshin]
-        feed.json.path = "{base}/genshin.json"
+        feed.json.path = '{}'
         feed.json.url = "https://example.org"
-        feed.atom.path = "{base}/genshin.xml"
+        feed.atom.path = '{}'
         title = "Genshin"
 
         [honkai]
-        feed.atom.path = "{base}/honkai.xml"
+        feed.atom.path = '{}'
         category_size = 3
     """
 
-    toml_config = toml_templ.format(base=base_tmp_path)
+    toml_config = toml_templ.format(
+        base_tmp_path / Path("genshin.json"),
+        base_tmp_path / Path("genshin.xml"),
+        base_tmp_path / Path("honkai.xml"),
+    )
 
     config_path = base_tmp_path / Path("feeds.toml")
     async with aiofiles.open(config_path, "w") as fd:
