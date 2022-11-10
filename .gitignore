@@ -1,8 +1,9 @@
 # directories
-.pytest_cache
-.tox
-venv
-src/*.egg-info
+.pytest_cache/
+.tox/
+venv/
+dist/
+src/*.egg-info/
 
 # coverage files
 */.coverage
