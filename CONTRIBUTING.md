@@ -10,7 +10,7 @@ If you have encountered a bug, please check if it is
 [being worked](https://github.com/c3kay/hoyolab-rss-feeds/pulls) 
 on first! If the bug is new, please open an issue and describe the problem as detailed
 as possible. Console output, the config file or the feed files can also be very
-helpful for debugging. So please attach them if needed! You can also use the Issue-page 
+helpful for debugging. So please attach them if needed! You can use the discussion page 
 to ask questions about the project, but please check if they have already been 
 answered before!
 

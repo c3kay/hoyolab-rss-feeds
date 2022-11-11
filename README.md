@@ -115,6 +115,11 @@ The `category_size` entry defines the amount of entries (default: 5) of a Hoyola
 category (Info, Event and Notices) for each feed. Therefore, the maximum size of a 
 feed will be `3 * category_size`.
 
+**Note:** When using Windows file paths (like `C:\\path\to\config.toml`), you should
+use single quotes (`'`) to avoid a misinterpretation of the backslashes by the TOML 
+parser. More info about the TOML format can be found in the 
+[official documentation](https://toml.io/en/).
+
 ### Options
 
 #### Games
