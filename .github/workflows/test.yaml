@@ -2,12 +2,18 @@ name: Test
 
 on:
   push:
+    branches:
+      - master
     paths-ignore:
-     - '**.md'
+      - '**.md'
+    tags-ignore:
+      - 'v[0-9].[0-9]+.[0-9]+'
   pull_request:
     types:
       - opened
       - reopened
+      - synchronize
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -58,6 +64,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          # full history needed to determine correct version
           fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -80,6 +87,7 @@ jobs:
           if-no-files-found: error
 
   deploy:
+    # only runs on master branch to avoid duplicate version uploads
     if: github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest

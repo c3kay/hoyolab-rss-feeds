@@ -15,7 +15,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body_path: RELEASENOTES.md
-          generate_release_notes: true
 
   build:
     runs-on: ubuntu-latest
