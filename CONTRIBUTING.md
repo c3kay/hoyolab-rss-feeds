@@ -5,14 +5,14 @@ you the basics to get started.
 
 ## Issues
 
-If you have encountered a bug, please check if it is 
-[already reported](https://github.com/c3kay/hoyolab-rss-feeds/issues) or 
-[being worked](https://github.com/c3kay/hoyolab-rss-feeds/pulls) 
-on first! If the bug is new, please open an issue and describe the problem as detailed
-as possible. Console output, the config file or the feed files can also be very
-helpful for debugging. So please attach them if needed! You can use the discussion page 
-to ask questions about the project, but please check if they have already been 
-answered before!
+If you have encountered a bug, please check at first if it has been 
+[already reported](https://github.com/c3kay/hoyolab-rss-feeds/issues) or is currently
+being worked on! If the bug is new, please open an issue and describe the problem 
+as detailed as possible. Console output, the config file or the feed files can also be 
+very helpful for debugging. So please attach them if needed!
+
+You can use the discussion page to ask questions about the project, but please also 
+check if they have already been answered before!
 
 ## Developing
 
@@ -59,4 +59,4 @@ Before submitting, make sure your code is...
 - well tested
 - in a dedicated branch
 
-If all checks pass, your code will be merged after a review! :)
+If all checks pass, your code can be merged after a review! :)
