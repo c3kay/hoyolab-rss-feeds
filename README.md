@@ -1,10 +1,10 @@
 # Hoyolab RSS Feeds
 
-![PyPI](https://img.shields.io/pypi/v/hoyolab-rss-feeds)
-![Python Version](https://img.shields.io/pypi/pyversions/hoyolab-rss-feeds)
-![Tests Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Test/master)
-![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master)
-![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![PyPI](https://img.shields.io/pypi/v/hoyolab-rss-feeds)](https://pypi.org/project/hoyolab-rss-feeds/)
+[![Python Version](https://img.shields.io/pypi/pyversions/hoyolab-rss-feeds)](https://pypi.org/project/hoyolab-rss-feeds/)
+[![Tests Status](https://img.shields.io/github/workflow/status/c3kay/hoyolab-rss-feeds/Test/master)](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/test.yaml)
+[![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master)](https://app.codecov.io/gh/c3kay/hoyolab-rss-feeds)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Generate RSS news feeds for games like *Genshin Impact* or *Honkai Impact 3rd* based 
 on the official [Hoyolab](https://www.hoyolab.com) forum posts. The current available 
