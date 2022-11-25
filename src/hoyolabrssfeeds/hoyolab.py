@@ -110,11 +110,17 @@ class HoyolabNews:
 
         post = await self.get_post(session, post_id)
 
+        content = post["post"]["content"]
+
+        # remove empty leading paragraphs
+        if content.startswith(("<p></p>", "<p>&nbsp;</p>", "<p><br></p>")):
+            content = content.partition("</p>")[2]
+
         item = {
             "id": post["post"]["post_id"],
             "title": post["post"]["subject"],
             "author": post["user"]["nickname"],
-            "content": post["post"]["content"],
+            "content": content,
             "category": post["post"]["official_type"],
             "published": post["post"]["created_at"],
         }
