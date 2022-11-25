@@ -2,43 +2,40 @@ import asyncio
 from pathlib import Path
 
 import aiofiles
-from aiohttp import ClientSession
+import aiohttp
 
-import hoyolabrssfeeds as hrf
+from hoyolabrssfeeds import FeedConfigLoader
+from hoyolabrssfeeds import Game
+from hoyolabrssfeeds import GameFeed
+from hoyolabrssfeeds import GameFeedCollection
 
 
-async def test_single_feed(client_session: ClientSession, tmp_path: Path):
+async def test_single_feed(client_session: aiohttp.ClientSession, tmp_path: Path):
     config_path = await _write_config(tmp_path)
-    config_loader = hrf.configs.FeedConfigLoader(config_path)
-    game_config = await config_loader.get_feed_config(hrf.models.Game.GENSHIN)
-    known_paths = [w.path for w in game_config.writer_configs]
-
-    game_feed = hrf.feeds.GameFeed.from_config(game_config)
+    config_loader = FeedConfigLoader(config_path)
+    game_config = await config_loader.get_feed_config(Game.GENSHIN)
+    game_feed = GameFeed.from_config(game_config)
 
     # initial creation
     await game_feed.create_feed(client_session)
 
-    for path in known_paths:
-        assert path.exists()
+    for feed_path in [w.path for w in game_config.writer_configs]:
+        assert feed_path.exists()
 
-    # save modification timestamps
-    m_times = [p.stat().st_mtime for p in known_paths]
-
-    await asyncio.sleep(1)
+    await asyncio.sleep(2)
 
     # feed update
     await game_feed.create_feed(client_session)
 
-    # feeds should not have changed after update
-    assert m_times == [p.stat().st_mtime for p in known_paths]
+    assert not game_feed.was_updated
 
 
-async def test_feed_collection(client_session: ClientSession, tmp_path: Path):
+async def test_feed_collection(client_session: aiohttp.ClientSession, tmp_path: Path):
     config_path = await _write_config(tmp_path)
-    config_loader = hrf.configs.FeedConfigLoader(config_path)
+    config_loader = FeedConfigLoader(config_path)
     game_configs = await config_loader.get_all_feed_configs()
 
-    feed_collection = hrf.feeds.GameFeedCollection.from_configs(game_configs)
+    feed_collection = GameFeedCollection.from_configs(game_configs)
     await feed_collection.create_feeds(client_session)
 
     for conf in game_configs:
@@ -50,8 +47,8 @@ async def test_feed_collection(client_session: ClientSession, tmp_path: Path):
 
 
 async def _write_config(base_tmp_path: Path):
-    # NOTE: paths are single quoted to get literal paths
-    # this should avoid wrongfully escaping of windows paths
+    # NOTE: paths are single quoted to get literal strings
+    # this should avoid wrongfully escaping of windows paths by tomli
     toml_templ = """
         icon = "https://example.org"
 

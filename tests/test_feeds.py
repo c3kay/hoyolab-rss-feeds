@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import List
 from unittest.mock import MagicMock
 
+import aiohttp
 import pytest
-from aiohttp import ClientSession
-from pytest_mock import MockFixture
+import pytest_mock
 
 from hoyolabrssfeeds import feeds
 from hoyolabrssfeeds import models
@@ -58,8 +58,8 @@ def test_create_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
 
 
 async def test_category_feed_new_item(
-    mocker: MockFixture,
-    client_session: ClientSession,
+    mocker: pytest_mock.MockFixture,
+    client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
     mocked_writers: List[MagicMock],
     mocked_loader: MagicMock,
@@ -107,8 +107,8 @@ async def test_category_feed_new_item(
 
 
 async def test_category_feed_updated_item(
-    mocker: MockFixture,
-    client_session: ClientSession,
+    mocker: pytest_mock.MockFixture,
+    client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
     mocked_writers: List[MagicMock],
     mocked_loader: MagicMock,
@@ -156,8 +156,8 @@ async def test_category_feed_updated_item(
 
 
 async def test_category_feed_unchanged(
-    mocker: MockFixture,
-    client_session: ClientSession,
+    mocker: pytest_mock.MockFixture,
+    client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
     mocked_writers: List[MagicMock],
     mocked_loader: MagicMock,
@@ -191,7 +191,7 @@ async def test_category_feed_unchanged(
 
 
 async def test_create_feed(
-    mocker: MockFixture,
+    mocker: pytest_mock.MockFixture,
     feed_meta: models.FeedMeta,
     mocked_writers: List[MagicMock],
     mocked_loader: MagicMock,
@@ -229,8 +229,8 @@ async def test_create_feed(
 
 
 async def test_create_feed_unchanged(
-    mocker: MockFixture,
-    client_session: ClientSession,
+    mocker: pytest_mock.MockFixture,
+    client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
     mocked_writers: List[MagicMock],
     mocked_loader: MagicMock,
@@ -281,7 +281,7 @@ def test_create_collection_from_config(
 
 
 async def test_create_feed_collections(
-    mocker: MockFixture,
+    mocker: pytest_mock.MockFixture,
     feed_meta: models.FeedMeta,
     mocked_writers: List[MagicMock],
     mocked_loader: MagicMock,

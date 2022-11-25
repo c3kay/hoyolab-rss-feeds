@@ -57,12 +57,17 @@ def config_path(tmp_path) -> Path:
 # ---- MODEL FIXTURES ----
 
 
-@pytest.fixture(params=[g for g in models.Game])
+@pytest.fixture(
+    params=[g for g in models.Game], ids=[g.name.lower() for g in models.Game]
+)
 def game(request) -> models.Game:
     return request.param
 
 
-@pytest.fixture(params=[c for c in models.FeedItemCategory])
+@pytest.fixture(
+    params=[c for c in models.FeedItemCategory],
+    ids=[c.name.lower() for c in models.FeedItemCategory],
+)
 def category(request) -> models.FeedItemCategory:
     return request.param
 

@@ -1,10 +1,10 @@
 from datetime import datetime
 from datetime import timezone
 
+import aiohttp
 import langdetect
 import pytest
-from aiohttp import ClientSession
-from pytest_mock import MockFixture
+import pytest_mock
 
 from hoyolabrssfeeds import errors
 from hoyolabrssfeeds import hoyolab
@@ -16,7 +16,9 @@ langdetect.DetectorFactory.seed = 42
 
 
 @pytest.mark.hoyolabapi
-async def test_api_post_endpoint(client_session: ClientSession, game: models.Game):
+async def test_api_post_endpoint(
+    client_session: aiohttp.ClientSession, game: models.Game
+):
     post_id = get_post_id(game)
     api = hoyolab.HoyolabNews(game)
     post = await api.get_post(client_session, post_id)
@@ -26,7 +28,9 @@ async def test_api_post_endpoint(client_session: ClientSession, game: models.Gam
 
 @pytest.mark.hoyolabapi
 async def test_api_list_endpoint(
-    client_session: ClientSession, game: models.Game, category: models.FeedItemCategory
+    client_session: aiohttp.ClientSession,
+    game: models.Game,
+    category: models.FeedItemCategory,
 ):
     api = hoyolab.HoyolabNews(game)
     news_list = await api.get_news_list(client_session, category, 2)
@@ -40,7 +44,9 @@ async def test_api_list_endpoint(
 
 @pytest.mark.hoyolabapi
 @pytest.mark.xfail(reason="not accurate for all languages")
-async def test_language(client_session: ClientSession, language: models.Language):
+async def test_language(
+    client_session: aiohttp.ClientSession, language: models.Language
+):
     # NOTE: The list endpoint is not checked due to insufficient text.
     # The text of the list endpoint is also not used for the feeds.
 
@@ -61,7 +67,7 @@ async def test_language(client_session: ClientSession, language: models.Language
 
 
 @pytest.mark.hoyolabapi
-async def test_request_errors(client_session: ClientSession):
+async def test_request_errors(client_session: aiohttp.ClientSession):
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
 
     # request error
@@ -86,7 +92,7 @@ async def test_request_errors(client_session: ClientSession):
         await api._request(client_session, {}, error_url)
 
 
-async def test_get_latest_item_metas(mocker: MockFixture, client_session):
+async def test_get_latest_item_metas(mocker: pytest_mock.MockFixture, client_session):
     posts = [
         {"post": {"post_id": "42", "created_at": 1645564944}, "last_modify_time": 0},
         {
@@ -122,7 +128,7 @@ async def test_get_latest_item_metas(mocker: MockFixture, client_session):
 
 
 async def test_get_feed_item(
-    mocker: MockFixture, feed_item: models.FeedItem, client_session
+    mocker: pytest_mock.MockFixture, feed_item: models.FeedItem, client_session
 ):
     post = {
         "post": {
