@@ -79,7 +79,15 @@ class Language(str, Enum):
 # --- PYDANTIC MODELS ---
 
 
-class FeedMeta(BaseModel):
+class MyBaseModel(BaseModel):
+    # https://docs.pydantic.dev/usage/model_config/#options
+    class Config:
+        extra = "forbid"
+        anystr_strip_whitespace = True
+        min_anystr_length = 1
+
+
+class FeedMeta(MyBaseModel):
     game: Game
     category_size: int = 5
     language: Language = Language.ENGLISH
@@ -87,7 +95,7 @@ class FeedMeta(BaseModel):
     icon: Optional[HttpUrl] = None
 
 
-class FeedItem(BaseModel):
+class FeedItem(MyBaseModel):
     id: int
     title: str
     author: str
@@ -98,12 +106,12 @@ class FeedItem(BaseModel):
     image: Optional[HttpUrl] = None
 
 
-class FeedItemMeta(BaseModel):
+class FeedItemMeta(MyBaseModel):
     id: int
     last_modified: datetime
 
 
-class FeedFileConfig(BaseModel):
+class FeedFileConfig(MyBaseModel):
     feed_type: FeedType
     path: Path
 
@@ -112,7 +120,7 @@ class FeedFileWriterConfig(FeedFileConfig):
     url: Optional[HttpUrl] = None
 
 
-class FeedConfig(BaseModel):
+class FeedConfig(MyBaseModel):
     feed_meta: FeedMeta
     writer_configs: List[FeedFileWriterConfig]
     loader_config: Optional[FeedFileConfig] = None
