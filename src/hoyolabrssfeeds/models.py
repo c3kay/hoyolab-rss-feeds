@@ -58,19 +58,21 @@ class FeedType(str, Enum):
 
 
 class Language(str, Enum):
-    CHINESE_CN = "zh-cn"
-    CHINESE_TW = "zh-tw"
     GERMAN = "de-de"
     ENGLISH = "en-us"
     SPANISH = "es-es"
     FRENCH = "fr-fr"
     INDONESIAN = "id-id"
+    ITALIAN = "it-it"
     JAPANESE = "ja-jp"
     KOREAN = "ko-kr"
     PORTUGUESE = "pt-pt"
     RUSSIAN = "ru-ru"
     THAI = "th-th"
+    TURKISH = "tr-tr"
     VIETNAMESE = "vi-vn"
+    CHINESE_CN = "zh-cn"
+    CHINESE_TW = "zh-tw"
 
     def __str__(self):  # pragma: no cover
         return self.value

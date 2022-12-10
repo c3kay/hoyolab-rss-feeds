@@ -12,7 +12,7 @@ from hoyolabrssfeeds import models
 from .conftest import validate_hoyolab_post
 
 # force consistent results
-langdetect.DetectorFactory.seed = 42
+langdetect.DetectorFactory.seed = 0
 
 
 @pytest.mark.hoyolabapi
@@ -52,8 +52,7 @@ async def test_language(
 
     api = hoyolab.HoyolabNews(models.Game.GENSHIN, language)
 
-    # pure text post for a decent recognition
-    post_id = 7156359
+    post_id = 14189622
     post = await api.get_post(client_session, post_id)
     content = post["post"]["content"]
 

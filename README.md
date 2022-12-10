@@ -66,7 +66,7 @@ It is also possible to generate the feeds directly from your Python application:
 ```python
 from hoyolabrssfeeds import FeedConfigLoader, GameFeed, GameFeedCollection, Game
 
-async def generate():
+async def generate_feeds():
     loader = FeedConfigLoader("path/to/config.toml")
     
     # all games in config
@@ -138,16 +138,18 @@ parser. More info about the TOML format can be found in the
 
 | Language     | Code    |
 |--------------|---------|
-| Chinese (CN) | `zh-cn` |
-| Chinese (TW) | `zh-tw` |
 | German       | `de-de` |
 | English      | `en-us` |
 | Spanish      | `es-es` |
 | French       | `fr-fr` |
 | Indonesian   | `id-id` |
+| Italian      | `it-it` |
 | Japanese     | `ja-jp` |
 | Korean       | `ko-kr` |
 | Portuguese   | `pt-pt` |
 | Russian      | `ru-ru` |
 | Thai         | `th-th` |
+| Turkish      | `tr-tr` |
 | Vietnamese   | `vi-vn` |
+| Chinese (CN) | `zh-cn` |
+| Chinese (TW) | `zh-tw` |
