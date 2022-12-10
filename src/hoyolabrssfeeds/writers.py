@@ -70,10 +70,10 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
             ),
         }
 
-        if self.config.url:
+        if self.config.url is not None:
             feed["feed_url"] = str(self.config.url)
 
-        if feed_meta.icon:
+        if feed_meta.icon is not None:
             feed["icon"] = str(feed_meta.icon)
 
         feed["items"] = [self.create_json_feed_item(item) for item in feed_items]
@@ -100,10 +100,10 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
             "date_published": item.published.astimezone().isoformat(),
         }
 
-        if item.updated:
-            json_item["date_updated"] = item.updated.astimezone().isoformat()
+        if item.updated is not None:
+            json_item["date_modified"] = item.updated.astimezone().isoformat()
 
-        if item.image:
+        if item.image is not None:
             json_item["image"] = str(item.image)
 
         return json_item
