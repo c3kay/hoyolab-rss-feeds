@@ -2,10 +2,10 @@ import json
 from abc import ABCMeta
 from abc import abstractmethod
 from datetime import datetime
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Set
-from typing import TypeVar
 from xml.etree import ElementTree
 
 import aiofiles
@@ -15,8 +15,6 @@ from .models import FeedFileWriterConfig
 from .models import FeedItem
 from .models import FeedMeta
 from .models import FeedType
-
-W = TypeVar("W", bound="AbstractFeedFileWriter")
 
 
 class AbstractFeedFileWriter(metaclass=ABCMeta):
@@ -50,7 +48,7 @@ class FeedFileWriterFactory:
         """Set of feed types for which writers are registered."""
         return set(self._writers.keys())
 
-    def create_writer(self, config: FeedFileWriterConfig) -> W:
+    def create_writer(self, config: FeedFileWriterConfig) -> AbstractFeedFileWriter:
         """Create a feed writer for the specified feed type."""
         return self._writers[config.feed_type](config)
 
@@ -61,7 +59,7 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
     async def write_feed(self, feed_meta: FeedMeta, feed_items: List[FeedItem]) -> None:
         """Write feed to JSON file."""
 
-        feed = {
+        feed: Dict[str, Any] = {
             "version": "https://jsonfeed.org/version/1.1",
             "title": feed_meta.title or "{} News".format(feed_meta.game.name.title()),
             "language": str(feed_meta.language),
@@ -87,7 +85,7 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
             ) from err
 
     @staticmethod
-    def create_json_feed_item(item: FeedItem) -> Dict:
+    def create_json_feed_item(item: FeedItem) -> Dict[str, Any]:
         """Convert FeedItem to JSON-Feed item."""
 
         json_item = {

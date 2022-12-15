@@ -53,7 +53,7 @@ class FeedType(str, Enum):
     JSON = "json"
     ATOM = "atom"
 
-    def __str__(self):  # pragma: no cover
+    def __str__(self) -> str:  # pragma: no cover
         return self.value
 
 
@@ -74,7 +74,7 @@ class Language(str, Enum):
     CHINESE_CN = "zh-cn"
     CHINESE_TW = "zh-tw"
 
-    def __str__(self):  # pragma: no cover
+    def __str__(self) -> str:  # pragma: no cover
         return self.value
 
 

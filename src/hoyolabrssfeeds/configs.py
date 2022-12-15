@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -26,14 +27,14 @@ class FeedConfigLoader:
         """TOML config file path."""
         return self._path
 
-    async def _load_from_file(self) -> Dict:
+    async def _load_from_file(self) -> Dict[str, Any]:
         """Load and parse config from TOML file."""
 
         try:
             async with aiofiles.open(self._path, "r") as fd:
                 conf_str = await fd.read()
 
-            config = tomli.loads(conf_str)
+            config: Dict[str, Any] = tomli.loads(conf_str)
         except IOError as err:
             raise ConfigIOError(
                 'Could not open config file at "{}"!'.format(self._path)
@@ -47,7 +48,7 @@ class FeedConfigLoader:
         return config
 
     @staticmethod
-    def _create_feed_config(game: Game, config_dict: Dict) -> FeedConfig:
+    def _create_feed_config(game: Game, config_dict: Dict[str, Any]) -> FeedConfig:
         """Create a feed config from a TOML dict for a specified game."""
 
         games = {g.name.lower() for g in Game}

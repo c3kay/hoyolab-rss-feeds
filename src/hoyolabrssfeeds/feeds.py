@@ -8,16 +8,16 @@ from typing import TypeVar
 import aiohttp
 
 from .hoyolab import HoyolabNews
+from .loaders import AbstractFeedFileLoader
 from .loaders import FeedFileLoaderFactory
-from .loaders import L
 from .models import FeedConfig
 from .models import FeedItem
 from .models import FeedItemCategory
 from .models import FeedMeta
+from .writers import AbstractFeedFileWriter
 from .writers import FeedFileWriterFactory
-from .writers import W
 
-# used for classmethods
+# used for class-methods
 _GF = TypeVar("_GF", bound="GameFeed")
 _GFC = TypeVar("_GFC", bound="GameFeedCollection")
 
@@ -26,7 +26,10 @@ class GameFeed:
     """Feed generator for a single game."""
 
     def __init__(
-        self, feed_meta: FeedMeta, feed_writers: List[W], feed_loader: L
+        self,
+        feed_meta: FeedMeta,
+        feed_writers: List[AbstractFeedFileWriter],
+        feed_loader: AbstractFeedFileLoader,
     ) -> None:
         # warn if identical paths for writers are found
         writer_paths = [str(writer.config.path) for writer in feed_writers]
@@ -59,6 +62,7 @@ class GameFeed:
         ]
 
         loader_factory = FeedFileLoaderFactory()
+        loader: AbstractFeedFileLoader
         if feed_config.loader_config:
             loader = loader_factory.create_loader(feed_config.loader_config)
         else:
@@ -92,7 +96,7 @@ class GameFeed:
                 await local_session.close()
 
         if self._was_updated:
-            combined_feed = []
+            combined_feed: List[FeedItem] = []
             for feed in category_feeds:
                 combined_feed.extend(feed)
 
@@ -163,8 +167,8 @@ class GameFeedCollection:
     def __init__(
         self,
         feed_metas: List[FeedMeta],
-        feed_writers: List[List[W]],
-        feed_loaders: List[L],
+        feed_writers: List[List[AbstractFeedFileWriter]],
+        feed_loaders: List[AbstractFeedFileLoader],
     ) -> None:
         if not (len(feed_metas) == len(feed_writers) == len(feed_loaders)):
             raise ValueError("Parameter lists do not have the same length!")

@@ -8,7 +8,7 @@ from .configs import FeedConfigLoader
 from .feeds import GameFeedCollection
 
 
-async def create_feeds(config_path: Optional[Path] = None):
+async def create_feeds(config_path: Optional[Path] = None) -> None:
     # fallback path defined in config loader if no path given
     config_loader = FeedConfigLoader(config_path)
 
@@ -25,10 +25,10 @@ async def create_feeds(config_path: Optional[Path] = None):
     await game_feed.create_feeds()
 
 
-def cli():
+def cli() -> None:
     if system() == "Windows":
         # default policy not working on windows
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
 
     arg_parser = argparse.ArgumentParser(
         prog="hoyolab-rss-feeds", description="Generate Hoyolab RSS feeds."

@@ -2,10 +2,10 @@ import json
 from abc import ABCMeta
 from abc import abstractmethod
 from datetime import datetime
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Set
-from typing import TypeVar
 from xml.etree import ElementTree
 
 import aiofiles
@@ -17,10 +17,8 @@ from .models import FeedFileConfig
 from .models import FeedItem
 from .models import FeedItemCategory
 from .models import FeedType
+from .writers import AbstractFeedFileWriter
 from .writers import JSONFeedFileWriter
-from .writers import W
-
-L = TypeVar("L", bound="AbstractFeedFileLoader")
 
 
 class AbstractFeedFileLoader(metaclass=ABCMeta):
@@ -54,11 +52,13 @@ class FeedFileLoaderFactory:
         """Set of feed types for which writers are registered."""
         return set(self._loaders.keys())
 
-    def create_loader(self, config: FeedFileConfig) -> L:
+    def create_loader(self, config: FeedFileConfig) -> AbstractFeedFileLoader:
         """Create feed loader for the specified feed type."""
         return self._loaders[config.feed_type](config)
 
-    def create_any_loader(self, writers: List[W]) -> L:
+    def create_any_loader(
+        self, writers: List[AbstractFeedFileWriter]
+    ) -> AbstractFeedFileLoader:
         """Create a suitable loader from given writers."""
 
         # prefer json loader if available
@@ -116,14 +116,14 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
         else:
             return []
 
-    async def _load_from_file(self) -> Dict:
+    async def _load_from_file(self) -> Dict[str, Any]:
         """Load JSON-Feed from file."""
 
         try:
             async with aiofiles.open(self.config.path, "r") as fd:
                 feed_json = await fd.read()
 
-            feed = json.loads(feed_json)
+            feed: Dict[str, Any] = json.loads(feed_json)
         except IOError as err:
             raise FeedIOError(
                 'Could not read JSON file from "{}"!'.format(self.config.path)

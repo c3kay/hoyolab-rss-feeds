@@ -1,3 +1,4 @@
+from typing import Any
 from typing import Dict
 from typing import List
 
@@ -23,8 +24,11 @@ class HoyolabNews:
         self._lang = language.lower()
 
     async def _request(
-        self, session: aiohttp.ClientSession, params: Dict, url: pydantic.HttpUrl
-    ) -> Dict:
+        self,
+        session: aiohttp.ClientSession,
+        params: Dict[str, Any],
+        url: pydantic.HttpUrl,
+    ) -> Dict[str, Any]:
         """Send a GET request to the Hoyolab API endpoint."""
 
         headers = {"Origin": "https://www.hoyolab.com", "X-Rpc-Language": self._lang}
@@ -32,7 +36,7 @@ class HoyolabNews:
         try:
             async with session.get(url, headers=headers, params=params) as response:
                 response.raise_for_status()
-                response_json = await response.json()
+                response_json: Dict[str, Any] = await response.json()
 
             if response_json["retcode"] != 0:
                 # the message might be in chinese
@@ -51,7 +55,7 @@ class HoyolabNews:
         session: aiohttp.ClientSession,
         category: FeedItemCategory,
         category_size: int = DEFAULT_CATEGORY_SIZE,
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """Request an overview of the latest posts."""
 
         params = {"gids": self._game, "page_size": category_size, "type": category}
@@ -61,10 +65,13 @@ class HoyolabNews:
         )
 
         response = await self._request(session, params, url)
+        news_list: List[Dict[str, Any]] = response["data"]["list"]
 
-        return response["data"]["list"]
+        return news_list
 
-    async def get_post(self, session: aiohttp.ClientSession, post_id: int) -> Dict:
+    async def get_post(
+        self, session: aiohttp.ClientSession, post_id: int
+    ) -> Dict[str, Any]:
         """Request single post with fulltext."""
 
         params = {"gids": self._game, "post_id": post_id}
@@ -74,8 +81,9 @@ class HoyolabNews:
         )
 
         response = await self._request(session, params, url)
+        post: Dict[str, Any] = response["data"]["post"]
 
-        return response["data"]["post"]
+        return post
 
     async def get_latest_item_metas(
         self,
