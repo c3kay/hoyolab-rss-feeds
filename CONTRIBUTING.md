@@ -16,7 +16,7 @@ check if they have already been answered before!
 
 ## Developing
 
-### Getting started
+### Getting Started
 
 After cloning this repo, you need to install the dev-dependencies and an 
 ["editable install"](https://pip.pypa.io/en/latest/topics/local-project-installs/)
@@ -39,14 +39,15 @@ tox -e py38 -- -m "not hoyolabapi"
 This will only run the Python 3.8 environment and will instruct pytest to exclude the
 Hoyolab API tests (which are kind of slow due to the amount of requests being made).
 
-### Linting
+### Tools
 
 To ensure a common code style, the 
 [black format](https://black.readthedocs.io/en/stable/) is used for this project. For
-basic code linting `flake8` is used. You can run these tools via tox:
+basic code linting `flake8` is used. The codebase is also type checked with `mypy`.
+You can run these tools via tox:
 
 ```shell
-tox -e flake,black
+tox -e flake,black,type
 ```
 
 ## Pull Requests
@@ -54,8 +55,8 @@ tox -e flake,black
 Before submitting, make sure your code is...
 
 - in the black format
-- type hinted (parameters and returns)
-- documented (docstrings and comments)
+- type checked (with mypy)
+- documented (docstrings and comments are sufficient)
 - well tested
 - in a dedicated branch
 
