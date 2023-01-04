@@ -4,9 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hoyolab-rss-feeds"
-authors = [
-    {name = "c3kay", email = "c3kay@icloud.com"}
-]
+authors = [{name = "c3kay"}]
 description = "RSS feed generator for official game news from Hoyolab."
 readme = "README.md"
 license = {text = "MIT License"}
