@@ -112,7 +112,7 @@ Entries defined at root level are considered default values and will apply to ev
 game section. The `feed` key can only be used in a game section. All other keys 
 can be defined at root level and can be overwritten by a game section.
 
-The `category_size` entry defines the amount of entries (default: 5) of a Hoyolab news 
+The `category_size` entry defines the amount of feed items (default: 5) of a Hoyolab news 
 category (Info, Event and Notices) for each feed. Therefore, the maximum size of a 
 feed will be `3 * category_size`.
 
