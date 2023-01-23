@@ -91,3 +91,6 @@ exclude_lines = [
 files = "src/"
 strict = true
 pretty = true
+plugins = [
+  "pydantic.mypy"
+]
