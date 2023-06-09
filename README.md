@@ -69,6 +69,9 @@ async def generate_feeds():
     await genshin_feed.create_feed()
 ```
 
+[Here](https://gist.github.com/c3kay/2cd9833ef1c527e210aebf7a866336ed)
+you can find an example on how to create a feed without using the TOML config file.
+
 ## Configuration
 
 In the TOML config file you can define for which games you want to create a feed
