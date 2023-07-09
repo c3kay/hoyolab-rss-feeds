@@ -34,7 +34,9 @@ class HoyolabNews:
         headers = {"Origin": "https://www.hoyolab.com", "X-Rpc-Language": self._lang}
 
         try:
-            async with session.get(url, headers=headers, params=params) as response:
+            async with session.get(
+                str(url), headers=headers, params=params
+            ) as response:
                 response.raise_for_status()
                 response_json: Dict[str, Any] = await response.json()
 

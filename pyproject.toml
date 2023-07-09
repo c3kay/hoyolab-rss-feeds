@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
@@ -35,8 +36,8 @@ classifiers = [
 dependencies = [
     "aiohttp >= 3.8.3",
     "aiofiles >= 22.1.0",
-    "pydantic >= 1.10.2",
-    "tomli >= 2.0.1"
+    "pydantic >= 1.10.2, < 2",
+    'tomli >= 2.0.1 ; python_version < "3.11"'
 ]
 dynamic = ["version"]
 

@@ -5,8 +5,12 @@ from typing import List
 from typing import Optional
 
 import aiofiles
-import tomli
 import pydantic
+
+try:
+    import tomllib as toml
+except ImportError:
+    import tomli as toml  # type: ignore
 
 from .errors import ConfigIOError
 from .errors import ConfigFormatError
@@ -34,12 +38,12 @@ class FeedConfigLoader:
             async with aiofiles.open(self._path, "r") as fd:
                 conf_str = await fd.read()
 
-            config: Dict[str, Any] = tomli.loads(conf_str)
+            config: Dict[str, Any] = toml.loads(conf_str)
         except IOError as err:
             raise ConfigIOError(
                 'Could not open config file at "{}"!'.format(self._path)
             ) from err
-        except tomli.TOMLDecodeError as err:
+        except toml.TOMLDecodeError as err:
             raise ConfigFormatError("Could not parse TOML config file!") from err
 
         if not any([game.name.lower() in config for game in Game]):

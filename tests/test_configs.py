@@ -7,7 +7,11 @@ from typing import Dict
 import aiofiles
 import pytest
 import pytest_mock
-import tomli
+
+try:
+    import tomllib as toml
+except ImportError:
+    import tomli as toml  # type: ignore
 
 from hoyolabrssfeeds import configs
 from hoyolabrssfeeds import errors
@@ -68,7 +72,7 @@ async def test_default_toml_file(config_path: Path):
     async with aiofiles.open(config_path, "r") as fd:
         toml_str = await fd.read()
 
-    default_config = tomli.loads(toml_str)
+    default_config = toml.loads(toml_str)
 
     expected = {
         "genshin": {"feed": {"json": {"path": "genshin.json"}}},
