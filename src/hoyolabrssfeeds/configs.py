@@ -16,6 +16,7 @@ from .errors import ConfigIOError
 from .errors import ConfigFormatError
 from .models import FeedConfig
 from .models import FeedFileWriterConfig
+from .models import FeedItemCategory
 from .models import FeedMeta
 from .models import Game
 
@@ -73,11 +74,19 @@ class FeedConfigLoader:
                 for feed_type, feed_config in feed_config_dict.items()
             ]
 
+            if "categories" in game_config_dict:
+                game_config_dict["categories"] = list(
+                    map(
+                        lambda cat: FeedItemCategory.from_str(cat),
+                        game_config_dict["categories"],
+                    )
+                )
+
             feed_meta = FeedMeta(game=game, **game_config_dict)
             feed_config = FeedConfig(feed_meta=feed_meta, writer_configs=writer_configs)
         except KeyError as err:
             raise ConfigFormatError("Could not find required key in config!") from err
-        except pydantic.ValidationError as err:
+        except (pydantic.ValidationError, ValueError) as err:
             raise ConfigFormatError("Invalid config value!") from err
 
         return feed_config

@@ -59,7 +59,7 @@ def test_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
 
 def test_init_no_loader(
     feed_meta: models.FeedMeta,
-    json_feed_file_writer_config: models.FeedFileWriterConfig
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
 ):
     writers = [JSONFeedFileWriter(json_feed_file_writer_config)]
     game_feed = feeds.GameFeed(feed_meta, writers)
@@ -270,7 +270,42 @@ async def test_create_feed_unchanged(
         writer.write_feed.assert_not_called()
 
 
-def test_create_collection_from_config(
+async def test_create_feed_one_category(
+    mocker: pytest_mock.MockFixture,
+    client_session: aiohttp.ClientSession,
+    feed_meta: models.FeedMeta,
+    feed_item: models.FeedItem,
+    mocked_writers: List[MagicMock],
+    mocked_loader: MagicMock,
+):
+    feed_meta.categories = [feed_item.category]
+
+    mocked_update_feed = mocker.patch(
+        "hoyolabrssfeeds.feeds.GameFeed._update_category_feed",
+        spec=True,
+        return_value=[feed_item],
+    )
+
+    # needed for writers to trigger
+    mocker.patch(
+        "hoyolabrssfeeds.feeds.GameFeed._was_updated",
+        new_callable=mocker.PropertyMock,
+        create=True,
+        return_value=True,
+    )
+
+    game_feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
+
+    await game_feed.create_feed(client_session)
+
+    mocked_update_feed.assert_awaited()
+    mocked_update_feed.assert_called_once()
+
+    for writer in mocked_writers:
+        writer.write_feed.assert_called_with(feed_meta, [feed_item])
+
+
+def test_collection_from_config(
     feed_config: models.FeedConfig, feed_config_no_loader: models.FeedConfig
 ):
     # NOTE: there is currently no check for identical paths of multiple game feeds

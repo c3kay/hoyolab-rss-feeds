@@ -161,7 +161,8 @@ def toml_config_dict(
                 str(models.FeedType.ATOM): {
                     "path": str(atom_feed_file_writer_config.path)
                 }
-            }
+            },
+            "categories": [models.FeedItemCategory.EVENTS.name.lower()],
         },
     }
 
@@ -245,6 +246,7 @@ def feed_meta() -> models.FeedMeta:
     return models.FeedMeta(
         game=models.Game.GENSHIN,
         category_size=1,
+        categories=[c for c in models.FeedItemCategory],
         language=models.Language.GERMAN,
         title="Example Feed",
         icon=pydantic.parse_obj_as(pydantic.HttpUrl, "https://example.org/"),

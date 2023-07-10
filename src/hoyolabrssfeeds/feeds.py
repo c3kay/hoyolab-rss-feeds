@@ -80,6 +80,7 @@ class GameFeed:
         """Create or update a feed and write it to files."""
 
         local_session = session or aiohttp.ClientSession()
+        feed_categories = self._feed_meta.categories or [c for c in FeedItemCategory]
         self._was_updated = False
 
         feed_items = await self._feed_loader.get_feed_items()
@@ -92,7 +93,7 @@ class GameFeed:
                         category,
                         [item for item in feed_items if item.category == category],
                     )
-                    for category in FeedItemCategory
+                    for category in feed_categories
                 ]
             )
         finally:
