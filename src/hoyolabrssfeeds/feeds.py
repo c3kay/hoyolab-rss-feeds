@@ -29,7 +29,7 @@ class GameFeed:
         self,
         feed_meta: FeedMeta,
         feed_writers: List[AbstractFeedFileWriter],
-        feed_loader: AbstractFeedFileLoader,
+        feed_loader: Optional[AbstractFeedFileLoader] = None,
     ) -> None:
         # warn if identical paths for writers are found
         writer_paths = [str(writer.config.path) for writer in feed_writers]
@@ -39,6 +39,10 @@ class GameFeed:
                     feed_meta.game.name.title()
                 )
             )
+
+        if feed_loader is None:
+            loader_factory = FeedFileLoaderFactory()
+            feed_loader = loader_factory.create_any_loader(feed_writers)
 
         self._feed_meta = feed_meta
         self._feed_writers = feed_writers
@@ -168,7 +172,7 @@ class GameFeedCollection:
         self,
         feed_metas: List[FeedMeta],
         feed_writers: List[List[AbstractFeedFileWriter]],
-        feed_loaders: List[AbstractFeedFileLoader],
+        feed_loaders: List[Optional[AbstractFeedFileLoader]],
     ) -> None:
         if not (len(feed_metas) == len(feed_writers) == len(feed_loaders)):
             raise ValueError("Parameter lists do not have the same length!")

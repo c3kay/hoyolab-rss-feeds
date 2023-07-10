@@ -35,7 +35,7 @@ def test_same_path_warning(
         feeds.GameFeed(feed_meta, duplicate_writers, mocked_loader)
 
 
-def test_create_from_config(feed_config: models.FeedConfig):
+def test_from_config(feed_config: models.FeedConfig):
     game_feed = feeds.GameFeed.from_config(feed_config)
 
     assert game_feed._feed_meta == feed_config.feed_meta
@@ -50,11 +50,21 @@ def test_create_from_config(feed_config: models.FeedConfig):
     assert game_feed._feed_loader.config == feed_config.loader_config
 
 
-def test_create_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
+def test_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
     game_feed = feeds.GameFeed.from_config(feed_config_no_loader)
 
     assert game_feed._feed_loader is not None
     assert issubclass(type(game_feed._feed_loader), AbstractFeedFileLoader)
+
+
+def test_init_no_loader(
+    feed_meta: models.FeedMeta,
+    json_feed_file_writer_config: models.FeedFileWriterConfig
+):
+    writers = [JSONFeedFileWriter(json_feed_file_writer_config)]
+    game_feed = feeds.GameFeed(feed_meta, writers)
+
+    assert game_feed._feed_loader.config.feed_type == models.FeedType.JSON
 
 
 async def test_category_feed_new_item(
