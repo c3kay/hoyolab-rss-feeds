@@ -187,9 +187,9 @@ class GameFeedCollection:
     def from_configs(cls: Type[_GFC], feed_configs: List[FeedConfig]) -> _GFC:
         """Create an instance via feed configs."""
 
-        metas = []
-        writers = []
-        loaders = []
+        metas: List[FeedMeta] = []
+        writers: List[List[AbstractFeedFileWriter]] = []
+        loaders: List[Optional[AbstractFeedFileLoader]] = []
 
         for feed_config in feed_configs:
             metas.append(feed_config.feed_meta)
@@ -202,10 +202,12 @@ class GameFeedCollection:
             writers.append(writers_configs)
 
             loader_factory = FeedFileLoaderFactory()
-            if feed_config.loader_config:
-                loaders.append(loader_factory.create_loader(feed_config.loader_config))
-            else:
-                loaders.append(loader_factory.create_any_loader(writers_configs))
+            loader = (
+                loader_factory.create_loader(feed_config.loader_config)
+                if feed_config.loader_config
+                else None
+            )
+            loaders.append(loader)
 
         return cls(metas, writers, loaders)
 
