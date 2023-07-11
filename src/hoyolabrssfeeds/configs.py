@@ -3,6 +3,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from warnings import warn
 
 import aiofiles
 import pydantic
@@ -93,6 +94,14 @@ class FeedConfigLoader:
 
     async def get_feed_config(self, game: Game) -> FeedConfig:
         """Load and create a feed config for a given game."""
+
+        warn(
+            # It is planned that you can define multi toml tables of the same game,
+            # to have different config for the same game. Therefore, this method will
+            # change or will be completely removed. Idk yet...
+            "This method will be removed/replaced in a future version!",
+            DeprecationWarning,
+        )
 
         config = await self._load_from_file()
 
