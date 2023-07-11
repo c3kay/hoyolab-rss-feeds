@@ -84,15 +84,16 @@ category_size = 15
 [genshin]
 feed.json.path = "path/to/genshin.json"
 feed.json.url = "https://example.org/genshin.json"
+category_size = 5
+categories = ["Info", "Notices"]
 title = "Genshin Impact News"
 icon = "https://example.org/icon.png"
 
-[honkai]
-feed.json.path = "path/to/honkai.json"
-feed.json.url = "https://example.org/honkai.json"
-feed.atom.path = "path/to/honkai.xml"
-feed.atom.url = "https://example.org/honkai.xml"
-category_size = 5
+[starrail]
+feed.json.path = "path/to/starrail.json"
+feed.json.url = "https://example.org/starrail.json"
+feed.atom.path = "path/to/starrail.xml"
+feed.atom.url = "https://example.org/starrail.xml"
 ```
 
 A minimal configuration requires at least one game section with a `feed.<format>.path`
@@ -104,11 +105,13 @@ game section. The `feed` key can only be used in a game section. All other keys
 can be defined at root level and they can be overwritten by a game section.
 
 The `category_size` entry defines the amount of feed items (default: 5) of a Hoyolab
-category (*Info*, *Event* and *Notices*) for each feed.
+category (*Info*, *Event* and *Notices*) for each feed. The `category` list entry 
+defines the categories selected for this feed. If this entry is omitted, all 
+categories are selected.
 
-**Note:** When using Windows file paths (like `C:\\path\to\config.toml`), you should
-single quote (`'`) them because of the backslashes. More info about the TOML format
-can be found in the [official documentation](https://toml.io/en/).
+**Note:** When using Windows file paths (like `C:\\path\to\config.toml`), single quotes
+should be used to avoid wrong auto-escaping of backslashes. More info about the TOML 
+format can be found in the [official documentation](https://toml.io/en/).
 
 ### Options
 
