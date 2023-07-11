@@ -103,7 +103,6 @@ async def test_load_toml_file_io_error(config_path: Path):
         await loader._load_from_file()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 async def test_create_feed_config(
     mocker: pytest_mock.MockFixture,
     feed_config_no_loader: models.FeedConfig,

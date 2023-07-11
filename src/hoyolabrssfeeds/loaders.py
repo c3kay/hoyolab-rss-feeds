@@ -105,14 +105,14 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
                         item_dict["image"] = item["image"]
 
                     feed_items.append(item_dict)
+
+                return pydantic.parse_obj_as(List[FeedItem], feed_items)
             except KeyError as err:
                 raise FeedFormatError(
                     "Could not find required key in JSON feed!"
                 ) from err
             except ValueError as err:
                 raise FeedFormatError("Could not load JSON feed items!") from err
-
-            return pydantic.parse_obj_as(List[FeedItem], feed_items)
         else:
             return []
 

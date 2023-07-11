@@ -3,7 +3,6 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
-from pytest import mark
 
 from hoyolabrssfeeds import FeedConfigLoader
 from hoyolabrssfeeds import Game
@@ -11,7 +10,6 @@ from hoyolabrssfeeds import GameFeed
 from hoyolabrssfeeds import GameFeedCollection
 
 
-@mark.filterwarnings("ignore::DeprecationWarning")
 async def test_single_feed(client_session: aiohttp.ClientSession, tmp_path: Path):
     config_path = await _write_config(tmp_path)
     config_loader = FeedConfigLoader(config_path)
