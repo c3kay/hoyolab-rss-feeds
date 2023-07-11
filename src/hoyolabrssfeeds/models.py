@@ -57,6 +57,7 @@ class FeedType(str, Enum):
         return self.value
 
 
+@unique
 class Language(str, Enum):
     GERMAN = "de-de"
     ENGLISH = "en-us"
@@ -92,6 +93,7 @@ class MyBaseModel(BaseModel):
 class FeedMeta(MyBaseModel):
     game: Game
     category_size: int = 5
+    categories: List[FeedItemCategory] = [c for c in FeedItemCategory]
     language: Language = Language.ENGLISH
     title: Optional[str] = None
     icon: Optional[HttpUrl] = None

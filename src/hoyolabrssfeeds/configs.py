@@ -5,13 +5,18 @@ from typing import List
 from typing import Optional
 
 import aiofiles
-import tomli
 import pydantic
+
+try:
+    import tomllib as toml
+except ImportError:
+    import tomli as toml  # type: ignore
 
 from .errors import ConfigIOError
 from .errors import ConfigFormatError
 from .models import FeedConfig
 from .models import FeedFileWriterConfig
+from .models import FeedItemCategory
 from .models import FeedMeta
 from .models import Game
 
@@ -34,12 +39,12 @@ class FeedConfigLoader:
             async with aiofiles.open(self._path, "r") as fd:
                 conf_str = await fd.read()
 
-            config: Dict[str, Any] = tomli.loads(conf_str)
+            config: Dict[str, Any] = toml.loads(conf_str)
         except IOError as err:
             raise ConfigIOError(
                 'Could not open config file at "{}"!'.format(self._path)
             ) from err
-        except tomli.TOMLDecodeError as err:
+        except toml.TOMLDecodeError as err:
             raise ConfigFormatError("Could not parse TOML config file!") from err
 
         if not any([game.name.lower() in config for game in Game]):
@@ -69,11 +74,19 @@ class FeedConfigLoader:
                 for feed_type, feed_config in feed_config_dict.items()
             ]
 
+            if "categories" in game_config_dict:
+                game_config_dict["categories"] = list(
+                    map(
+                        lambda cat: FeedItemCategory.from_str(cat),
+                        game_config_dict["categories"],
+                    )
+                )
+
             feed_meta = FeedMeta(game=game, **game_config_dict)
             feed_config = FeedConfig(feed_meta=feed_meta, writer_configs=writer_configs)
         except KeyError as err:
             raise ConfigFormatError("Could not find required key in config!") from err
-        except pydantic.ValidationError as err:
+        except (pydantic.ValidationError, ValueError) as err:
             raise ConfigFormatError("Invalid config value!") from err
 
         return feed_config

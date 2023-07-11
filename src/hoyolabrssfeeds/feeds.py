@@ -29,7 +29,7 @@ class GameFeed:
         self,
         feed_meta: FeedMeta,
         feed_writers: List[AbstractFeedFileWriter],
-        feed_loader: AbstractFeedFileLoader,
+        feed_loader: Optional[AbstractFeedFileLoader] = None,
     ) -> None:
         # warn if identical paths for writers are found
         writer_paths = [str(writer.config.path) for writer in feed_writers]
@@ -39,6 +39,10 @@ class GameFeed:
                     feed_meta.game.name.title()
                 )
             )
+
+        if feed_loader is None:
+            loader_factory = FeedFileLoaderFactory()
+            feed_loader = loader_factory.create_any_loader(feed_writers)
 
         self._feed_meta = feed_meta
         self._feed_writers = feed_writers
@@ -76,6 +80,7 @@ class GameFeed:
         """Create or update a feed and write it to files."""
 
         local_session = session or aiohttp.ClientSession()
+        feed_categories = self._feed_meta.categories or [c for c in FeedItemCategory]
         self._was_updated = False
 
         feed_items = await self._feed_loader.get_feed_items()
@@ -88,7 +93,7 @@ class GameFeed:
                         category,
                         [item for item in feed_items if item.category == category],
                     )
-                    for category in FeedItemCategory
+                    for category in feed_categories
                 ]
             )
         finally:
@@ -168,7 +173,7 @@ class GameFeedCollection:
         self,
         feed_metas: List[FeedMeta],
         feed_writers: List[List[AbstractFeedFileWriter]],
-        feed_loaders: List[AbstractFeedFileLoader],
+        feed_loaders: List[Optional[AbstractFeedFileLoader]],
     ) -> None:
         if not (len(feed_metas) == len(feed_writers) == len(feed_loaders)):
             raise ValueError("Parameter lists do not have the same length!")
@@ -182,9 +187,9 @@ class GameFeedCollection:
     def from_configs(cls: Type[_GFC], feed_configs: List[FeedConfig]) -> _GFC:
         """Create an instance via feed configs."""
 
-        metas = []
-        writers = []
-        loaders = []
+        metas: List[FeedMeta] = []
+        writers: List[List[AbstractFeedFileWriter]] = []
+        loaders: List[Optional[AbstractFeedFileLoader]] = []
 
         for feed_config in feed_configs:
             metas.append(feed_config.feed_meta)
@@ -197,10 +202,12 @@ class GameFeedCollection:
             writers.append(writers_configs)
 
             loader_factory = FeedFileLoaderFactory()
-            if feed_config.loader_config:
-                loaders.append(loader_factory.create_loader(feed_config.loader_config))
-            else:
-                loaders.append(loader_factory.create_any_loader(writers_configs))
+            loader = (
+                loader_factory.create_loader(feed_config.loader_config)
+                if feed_config.loader_config
+                else None
+            )
+            loaders.append(loader)
 
         return cls(metas, writers, loaders)
 

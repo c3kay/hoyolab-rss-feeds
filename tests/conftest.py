@@ -27,7 +27,17 @@ def event_loop():
         # default policy not working on windows
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    return asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
+
+    yield loop
+
+    pending = asyncio.tasks.all_tasks(loop)
+    loop.run_until_complete(asyncio.gather(*pending))
+    loop.run_until_complete(asyncio.sleep(1))
+
+    loop.close()
+
+    # https://stackoverflow.com/questions/65740542/exception-ignored-runtimeerror-event-loop-is-closed-when-using-pytest-asynci
 
 
 @pytest.fixture(scope="session")
@@ -151,7 +161,8 @@ def toml_config_dict(
                 str(models.FeedType.ATOM): {
                     "path": str(atom_feed_file_writer_config.path)
                 }
-            }
+            },
+            "categories": [models.FeedItemCategory.EVENTS.name.lower()],
         },
     }
 
@@ -235,6 +246,7 @@ def feed_meta() -> models.FeedMeta:
     return models.FeedMeta(
         game=models.Game.GENSHIN,
         category_size=1,
+        categories=[c for c in models.FeedItemCategory],
         language=models.Language.GERMAN,
         title="Example Feed",
         icon=pydantic.parse_obj_as(pydantic.HttpUrl, "https://example.org/"),

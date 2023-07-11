@@ -1,8 +1,8 @@
+## New Features
+- Added python 3.11 support
+- Added category selection/filtering for feeds
+
 ## Changes
-
-- Added PEP 561 compliance (type hints)
-
-## Fixes
-
-- Rewording in CONTRIBUTING.md and README.md
-- Fixed build badge in README.md
+- feed_loader param is now optional for GameFeed
+- Updated dependencies
+- Minor bug fixes
