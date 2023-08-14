@@ -1,8 +1,6 @@
-## New Features
-- Added python 3.11 support
-- Added category selection/filtering for feeds
-
 ## Changes
-- feed_loader param is now optional for GameFeed
-- Updated dependencies
-- Minor bug fixes
+- Now using dedicated cover images for posts instead of the first image
+
+## Fixes
+- Fixed Hoyolab bug: Some images had private URLs and would not load
+- Added type checking for tests
