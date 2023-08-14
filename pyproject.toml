@@ -90,7 +90,7 @@ exclude_lines = [
 ]
 
 [tool.mypy]
-files = "src/"
+files = "src/,tests/"
 strict = true
 pretty = true
 plugins = [

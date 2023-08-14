@@ -10,7 +10,9 @@ from hoyolabrssfeeds import GameFeed
 from hoyolabrssfeeds import GameFeedCollection
 
 
-async def test_single_feed(client_session: aiohttp.ClientSession, tmp_path: Path):
+async def test_single_feed(
+    client_session: aiohttp.ClientSession, tmp_path: Path
+) -> None:
     config_path = await _write_config(tmp_path)
     config_loader = FeedConfigLoader(config_path)
     game_config = await config_loader.get_feed_config(Game.GENSHIN)
@@ -30,7 +32,9 @@ async def test_single_feed(client_session: aiohttp.ClientSession, tmp_path: Path
     assert not game_feed.was_updated
 
 
-async def test_feed_collection(client_session: aiohttp.ClientSession, tmp_path: Path):
+async def test_feed_collection(
+    client_session: aiohttp.ClientSession, tmp_path: Path
+) -> None:
     config_path = await _write_config(tmp_path)
     config_loader = FeedConfigLoader(config_path)
     game_configs = await config_loader.get_all_feed_configs()
@@ -46,7 +50,7 @@ async def test_feed_collection(client_session: aiohttp.ClientSession, tmp_path: 
 # ---- HELPER FUNCTIONS ----
 
 
-async def _write_config(base_tmp_path: Path):
+async def _write_config(base_tmp_path: Path) -> Path:
     # NOTE: paths are single quoted to get literal strings
     # this should avoid wrongfully escaping of windows paths by tomli
     toml_templ = """

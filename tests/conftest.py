@@ -3,7 +3,10 @@ import re
 from datetime import datetime
 from pathlib import Path
 from platform import system
+from typing import Any
+from typing import AsyncGenerator
 from typing import Dict
+from typing import Generator
 from typing import List
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
@@ -22,10 +25,10 @@ from hoyolabrssfeeds.writers import AbstractFeedFileWriter
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> Generator[asyncio.AbstractEventLoop, Any, None]:
     if system() == "Windows":
         # default policy not working on windows
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
 
     loop = asyncio.get_event_loop()
 
@@ -41,7 +44,9 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-async def client_session(event_loop):
+async def client_session(
+    event_loop: asyncio.AbstractEventLoop,
+) -> AsyncGenerator[aiohttp.ClientSession, Any]:
     async with aiohttp.ClientSession(loop=event_loop, raise_for_status=True) as cs:
         yield cs
 
@@ -50,17 +55,17 @@ async def client_session(event_loop):
 
 
 @pytest.fixture
-def json_path(tmp_path) -> Path:
+def json_path(tmp_path: Path) -> Path:
     return tmp_path / Path("json_feed.json")
 
 
 @pytest.fixture
-def atom_path(tmp_path) -> Path:
+def atom_path(tmp_path: Path) -> Path:
     return tmp_path / Path("atom_feed.xml")
 
 
 @pytest.fixture
-def config_path(tmp_path) -> Path:
+def config_path(tmp_path: Path) -> Path:
     return tmp_path / Path("feeds.toml")
 
 
@@ -70,7 +75,7 @@ def config_path(tmp_path) -> Path:
 @pytest.fixture(
     params=[g for g in models.Game], ids=[g.name.lower() for g in models.Game]
 )
-def game(request) -> models.Game:
+def game(request: Any) -> Any:
     return request.param
 
 
@@ -78,12 +83,12 @@ def game(request) -> models.Game:
     params=[c for c in models.FeedItemCategory],
     ids=[c.name.lower() for c in models.FeedItemCategory],
 )
-def category(request) -> models.FeedItemCategory:
+def category(request: Any) -> Any:
     return request.param
 
 
 @pytest.fixture(params=[la for la in models.Language])
-def language(request) -> models.Language:
+def language(request: Any) -> Any:
     return request.param
 
 
@@ -91,7 +96,7 @@ def language(request) -> models.Language:
 
 
 @pytest.fixture
-def json_feed_file_writer_config(json_path) -> models.FeedFileWriterConfig:
+def json_feed_file_writer_config(json_path: Path) -> models.FeedFileWriterConfig:
     return models.FeedFileWriterConfig(
         feed_type=models.FeedType.JSON,
         path=json_path,
@@ -100,7 +105,7 @@ def json_feed_file_writer_config(json_path) -> models.FeedFileWriterConfig:
 
 
 @pytest.fixture
-def atom_feed_file_writer_config(atom_path) -> models.FeedFileWriterConfig:
+def atom_feed_file_writer_config(atom_path: Path) -> models.FeedFileWriterConfig:
     return models.FeedFileWriterConfig(
         feed_type=models.FeedType.ATOM,
         path=atom_path,
@@ -109,18 +114,20 @@ def atom_feed_file_writer_config(atom_path) -> models.FeedFileWriterConfig:
 
 
 @pytest.fixture
-def json_feed_file_config(json_path) -> models.FeedFileConfig:
+def json_feed_file_config(json_path: Path) -> models.FeedFileConfig:
     return models.FeedFileConfig(feed_type=models.FeedType.JSON, path=json_path)
 
 
 @pytest.fixture
-def atom_feed_file_config(atom_path) -> models.FeedFileConfig:
+def atom_feed_file_config(atom_path: Path) -> models.FeedFileConfig:
     return models.FeedFileConfig(feed_type=models.FeedType.ATOM, path=atom_path)
 
 
 @pytest.fixture
 def feed_config(
-    feed_meta, json_feed_file_writer_config, json_feed_file_config
+    feed_meta: models.FeedMeta,
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+    json_feed_file_config: models.FeedFileConfig,
 ) -> models.FeedConfig:
     return models.FeedConfig(
         feed_meta=feed_meta,
@@ -130,7 +137,10 @@ def feed_config(
 
 
 @pytest.fixture
-def feed_config_no_loader(feed_meta, json_feed_file_writer_config) -> models.FeedConfig:
+def feed_config_no_loader(
+    feed_meta: models.FeedMeta,
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+) -> models.FeedConfig:
     return models.FeedConfig(
         feed_meta=feed_meta,
         writer_configs=[json_feed_file_writer_config],
@@ -140,9 +150,9 @@ def feed_config_no_loader(feed_meta, json_feed_file_writer_config) -> models.Fee
 @pytest.fixture
 def toml_config_dict(
     feed_meta: models.FeedMeta,
-    json_feed_file_writer_config,
-    atom_feed_file_writer_config,
-) -> Dict:
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+    atom_feed_file_writer_config: models.FeedFileWriterConfig,
+) -> Dict[str, Any]:
     return {
         "category_size": feed_meta.category_size,
         "language": str(feed_meta.language),
@@ -185,14 +195,14 @@ def feed_item() -> models.FeedItem:
 
 
 @pytest.fixture
-def feed_item_list(feed_item) -> List[models.FeedItem]:
+def feed_item_list(feed_item: models.FeedItem) -> List[models.FeedItem]:
     other_item = feed_item.copy()
     other_item.id -= 1
     return [feed_item, other_item]
 
 
 @pytest.fixture
-def json_feed_items(feed_item_list) -> Dict:
+def json_feed_items(feed_item_list: List[models.FeedItem]) -> Dict[str, Any]:
     return {
         "items": [
             {
@@ -203,7 +213,9 @@ def json_feed_items(feed_item_list) -> Dict:
                 "tags": [feed_item.category.name.title()],
                 "content_html": feed_item.content,
                 "date_published": feed_item.published.astimezone().isoformat(),
-                "date_modified": feed_item.updated.astimezone().isoformat(),
+                "date_modified": feed_item.updated.astimezone().isoformat()
+                if feed_item.updated
+                else "",
                 "image": feed_item.image,
             }
             for feed_item in feed_item_list
@@ -212,7 +224,7 @@ def json_feed_items(feed_item_list) -> Dict:
 
 
 @pytest.fixture
-def atom_feed_entries(feed_item_list) -> ElementTree.Element:
+def atom_feed_entries(feed_item_list: List[models.FeedItem]) -> ElementTree.Element:
     # omitting namespace declarations because they should be removed before
     root = ElementTree.Element("feed")
 
@@ -234,9 +246,11 @@ def atom_feed_entries(feed_item_list) -> ElementTree.Element:
         ElementTree.SubElement(author, "name").text = feed_item.author
 
         published_str = feed_item.published.astimezone().isoformat()
-        updated_str = feed_item.updated.astimezone().isoformat()
         ElementTree.SubElement(entry, "published").text = published_str
-        ElementTree.SubElement(entry, "updated").text = updated_str
+
+        if feed_item.updated is not None:
+            updated_str = feed_item.updated.astimezone().isoformat()
+            ElementTree.SubElement(entry, "updated").text = updated_str
 
     return root
 
@@ -255,7 +269,7 @@ def feed_meta() -> models.FeedMeta:
 
 @pytest.fixture
 def category_feeds(feed_item: models.FeedItem) -> List[List[models.FeedItem]]:
-    cat_feeds = []
+    cat_feeds: List[List[models.FeedItem]] = []
     for i, cat in enumerate(models.FeedItemCategory):
         item = feed_item.copy()
         item.id += i
@@ -267,7 +281,7 @@ def category_feeds(feed_item: models.FeedItem) -> List[List[models.FeedItem]]:
 
 @pytest.fixture
 def combined_feed(category_feeds: List[List[models.FeedItem]]) -> List[models.FeedItem]:
-    comb_feed = []
+    comb_feed: List[models.FeedItem] = []
     for item_list in category_feeds:
         comb_feed.extend(item_list)
     comb_feed.sort(key=lambda x: x.id, reverse=True)
@@ -280,7 +294,7 @@ def combined_feed(category_feeds: List[List[models.FeedItem]]) -> List[models.Fe
 
 @pytest.fixture
 def mocked_loader(mocker: pytest_mock.MockFixture) -> MagicMock:
-    loader = mocker.create_autospec(AbstractFeedFileLoader, instance=True)
+    loader: MagicMock = mocker.create_autospec(AbstractFeedFileLoader, instance=True)
     loader.get_feed_items = mocker.AsyncMock(return_value=[])
 
     return loader
@@ -288,7 +302,7 @@ def mocked_loader(mocker: pytest_mock.MockFixture) -> MagicMock:
 
 @pytest.fixture
 def mocked_writers(mocker: pytest_mock.MockFixture) -> List[MagicMock]:
-    writer = mocker.create_autospec(AbstractFeedFileWriter, instance=True)
+    writer: MagicMock = mocker.create_autospec(AbstractFeedFileWriter, instance=True)
 
     return [writer]
 
@@ -298,7 +312,7 @@ def mocked_writers(mocker: pytest_mock.MockFixture) -> List[MagicMock]:
 # https://docs.pytest.org/en/6.2.x/assert.html#assertion-introspection-details
 
 
-def validate_hoyolab_post(post: Dict, is_full_post: bool):
+def validate_hoyolab_post(post: Dict[str, Any], is_full_post: bool) -> None:
     assert type(post["post"]["post_id"]) is str
     assert re.fullmatch(r"\d+", post["post"]["post_id"]) is not None
 

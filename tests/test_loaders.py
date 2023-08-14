@@ -1,6 +1,7 @@
 import json
 from platform import system
 from stat import S_IWRITE
+from typing import Any
 from typing import Dict
 from typing import List
 from xml.etree import ElementTree
@@ -18,7 +19,7 @@ from hoyolabrssfeeds import writers
 # ---- FACTORY TESTS ----
 
 
-def test_factory_feed_types():
+def test_factory_feed_types() -> None:
     factory = loaders.FeedFileLoaderFactory()
     expected = {models.FeedType.ATOM, models.FeedType.JSON}
 
@@ -28,7 +29,7 @@ def test_factory_feed_types():
 def test_factory_create_loader(
     json_feed_file_config: models.FeedFileConfig,
     atom_feed_file_config: models.FeedFileConfig,
-):
+) -> None:
     factory = loaders.FeedFileLoaderFactory()
     json_loader = factory.create_loader(json_feed_file_config)
 
@@ -42,11 +43,11 @@ def test_factory_create_loader(
 
 
 def test_factory_create_any_loader(
-    atom_feed_file_config: models.FeedFileConfig,
-    json_feed_file_config: models.FeedFileConfig,
-):
-    json_writer = writers.JSONFeedFileWriter(json_feed_file_config)
-    atom_writer = writers.AtomFeedFileWriter(atom_feed_file_config)
+    json_feed_file_writer_config: models.FeedFileWriterConfig,
+    atom_feed_file_writer_config: models.FeedFileWriterConfig,
+) -> None:
+    json_writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
+    atom_writer = writers.AtomFeedFileWriter(atom_feed_file_writer_config)
 
     factory = loaders.FeedFileLoaderFactory()
     json_loader = factory.create_any_loader([atom_writer, json_writer])
@@ -60,7 +61,7 @@ def test_factory_create_any_loader(
     assert isinstance(atom_loader, loaders.AtomFeedFileLoader)
 
 
-def test_factory_create_invalid_any_loader():
+def test_factory_create_invalid_any_loader() -> None:
     factory = loaders.FeedFileLoaderFactory()
 
     with pytest.raises(ValueError, match="Could not create"):
@@ -70,7 +71,7 @@ def test_factory_create_invalid_any_loader():
 # ---- JSON LOADER TESTS ----
 
 
-def test_json_feed_loader_config(json_feed_file_config: models.FeedFileConfig):
+def test_json_feed_loader_config(json_feed_file_config: models.FeedFileConfig) -> None:
     loader = loaders.JSONFeedFileLoader(json_feed_file_config)
 
     assert loader.config == json_feed_file_config
@@ -78,10 +79,10 @@ def test_json_feed_loader_config(json_feed_file_config: models.FeedFileConfig):
 
 async def test_json_feed_loader(
     mocker: pytest_mock.MockFixture,
-    json_feed_items: Dict,
+    json_feed_items: Dict[str, Any],
     feed_item_list: List[models.FeedItem],
     json_feed_file_config: models.FeedFileConfig,
-):
+) -> None:
     mocked_load = mocker.patch(
         "hoyolabrssfeeds.loaders.JSONFeedFileLoader._load_from_file",
         spec=True,
@@ -102,9 +103,9 @@ async def test_json_feed_loader(
 
 async def test_invalid_json_feed_values(
     mocker: pytest_mock.MockFixture,
-    json_feed_items: Dict,
+    json_feed_items: Dict[str, Any],
     json_feed_file_config: models.FeedFileConfig,
-):
+) -> None:
     # set invalid value
     json_feed_items["items"][0]["tags"] = ["invalid"]
 
@@ -123,7 +124,7 @@ async def test_invalid_json_feed_values(
 
 async def test_invalid_json_feed(
     mocker: pytest_mock.MockFixture, json_feed_file_config: models.FeedFileConfig
-):
+) -> None:
     mocker.patch(
         "hoyolabrssfeeds.loaders.JSONFeedFileLoader._load_from_file",
         spec=True,
@@ -137,13 +138,13 @@ async def test_invalid_json_feed(
         await loader.get_feed_items()
 
 
-async def test_no_json_file(json_feed_file_config: models.FeedFileConfig):
+async def test_no_json_file(json_feed_file_config: models.FeedFileConfig) -> None:
     loader = loaders.JSONFeedFileLoader(json_feed_file_config)
 
     assert await loader.get_feed_items() == []
 
 
-async def test_load_json_file(json_feed_file_config):
+async def test_load_json_file(json_feed_file_config: models.FeedFileConfig) -> None:
     data = {"version": "https://jsonfeed.org/version/1.1"}
 
     async with aiofiles.open(json_feed_file_config.path, "w") as fd:
@@ -155,7 +156,9 @@ async def test_load_json_file(json_feed_file_config):
     assert loaded_data == data
 
 
-async def test_load_invalid_json_file(json_feed_file_config: models.FeedFileConfig):
+async def test_load_invalid_json_file(
+    json_feed_file_config: models.FeedFileConfig,
+) -> None:
     loader = loaders.JSONFeedFileLoader(json_feed_file_config)
 
     # write invalid json file
@@ -167,7 +170,9 @@ async def test_load_invalid_json_file(json_feed_file_config: models.FeedFileConf
 
 
 @pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
-async def test_load_json_file_io_error(json_feed_file_config: models.FeedFileConfig):
+async def test_load_json_file_io_error(
+    json_feed_file_config: models.FeedFileConfig,
+) -> None:
     loader = loaders.JSONFeedFileLoader(json_feed_file_config)
 
     # create write only file
@@ -180,7 +185,7 @@ async def test_load_json_file_io_error(json_feed_file_config: models.FeedFileCon
 # ---- ATOM LOADER TESTS ----
 
 
-def test_atom_feed_loader_config(atom_feed_file_config: models.FeedFileConfig):
+def test_atom_feed_loader_config(atom_feed_file_config: models.FeedFileConfig) -> None:
     loader = loaders.AtomFeedFileLoader(atom_feed_file_config)
 
     assert loader.config == atom_feed_file_config
@@ -191,7 +196,7 @@ async def test_atom_feed_loader(
     feed_item_list: List[models.FeedItem],
     atom_feed_entries: ElementTree.Element,
     atom_feed_file_config: models.FeedFileConfig,
-):
+) -> None:
     mocked_load = mocker.patch(
         "hoyolabrssfeeds.loaders.AtomFeedFileLoader._load_from_file",
         spec=True,
@@ -218,9 +223,13 @@ async def test_invalid_atom_feed_values(
     mocker: pytest_mock.MockFixture,
     atom_feed_entries: ElementTree.Element,
     atom_feed_file_config: models.FeedFileConfig,
-):
+) -> None:
     # set invalid value in first entry
-    atom_feed_entries.find("entry/category").set("term", "invalid")
+    category_element = atom_feed_entries.find("entry/category")
+    if category_element is not None:
+        category_element.set("term", "invalid")
+    else:
+        pytest.fail(reason="Category element could not be found!")
 
     mocker.patch(
         "hoyolabrssfeeds.loaders.AtomFeedFileLoader._load_from_file",
@@ -237,7 +246,7 @@ async def test_invalid_atom_feed_values(
 
 async def test_invalid_atom_feed(
     mocker: pytest_mock.MockFixture, atom_feed_file_config: models.FeedFileConfig
-):
+) -> None:
     invalid_feed = ElementTree.Element("feed")
     ElementTree.SubElement(invalid_feed, "entry")
 
@@ -254,13 +263,13 @@ async def test_invalid_atom_feed(
         await loader.get_feed_items()
 
 
-async def test_no_atom_file(atom_feed_file_config):
+async def test_no_atom_file(atom_feed_file_config: models.FeedFileConfig) -> None:
     loader = loaders.AtomFeedFileLoader(atom_feed_file_config)
 
     assert await loader.get_feed_items() == []
 
 
-async def test_load_atom_file(atom_feed_file_config):
+async def test_load_atom_file(atom_feed_file_config: models.FeedFileConfig) -> None:
     loader = loaders.AtomFeedFileLoader(atom_feed_file_config)
 
     # faking namespace declaration because it is supposed to be removed in fn
@@ -279,7 +288,9 @@ async def test_load_atom_file(atom_feed_file_config):
     assert loaded_feed.findtext("title") == title_text
 
 
-async def test_load_invalid_atom_file(atom_feed_file_config):
+async def test_load_invalid_atom_file(
+    atom_feed_file_config: models.FeedFileConfig,
+) -> None:
     loader = loaders.AtomFeedFileLoader(atom_feed_file_config)
 
     async with aiofiles.open(atom_feed_file_config.path, "w") as fd:
@@ -290,7 +301,9 @@ async def test_load_invalid_atom_file(atom_feed_file_config):
 
 
 @pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
-async def test_load_atom_file_io_error(atom_feed_file_config):
+async def test_load_atom_file_io_error(
+    atom_feed_file_config: models.FeedFileConfig,
+) -> None:
     loader = loaders.AtomFeedFileLoader(atom_feed_file_config)
 
     # create write only file

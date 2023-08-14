@@ -1,7 +1,8 @@
 from pathlib import Path
 from platform import system
-from stat import S_IWRITE
 from stat import S_IREAD
+from stat import S_IWRITE
+from typing import Any
 from typing import Dict
 
 import aiofiles
@@ -18,7 +19,7 @@ from hoyolabrssfeeds import errors
 from hoyolabrssfeeds import models
 
 
-def test_config_paths(config_path: Path):
+def test_config_paths(config_path: Path) -> None:
     param_config = configs.FeedConfigLoader(config_path)
     assert param_config.path == config_path
 
@@ -26,7 +27,7 @@ def test_config_paths(config_path: Path):
     assert fallback_config.path == Path("hoyolab-rss-feeds.toml")
 
 
-async def test_load_toml_file(config_path: Path):
+async def test_load_toml_file(config_path: Path) -> None:
     loader = configs.FeedConfigLoader(config_path)
 
     toml_str = """
@@ -43,7 +44,7 @@ async def test_load_toml_file(config_path: Path):
     assert config_dict == expected
 
 
-async def test_invalid_toml_file(config_path: Path):
+async def test_invalid_toml_file(config_path: Path) -> None:
     loader = configs.FeedConfigLoader(config_path)
 
     async with aiofiles.open(config_path, "w") as fd:
@@ -53,7 +54,7 @@ async def test_invalid_toml_file(config_path: Path):
         await loader._load_from_file()
 
 
-async def test_empty_toml_file(config_path: Path):
+async def test_empty_toml_file(config_path: Path) -> None:
     loader = configs.FeedConfigLoader(config_path)
 
     config_path.touch()
@@ -62,7 +63,7 @@ async def test_empty_toml_file(config_path: Path):
         await loader._load_from_file()
 
 
-async def test_default_toml_file(config_path: Path):
+async def test_default_toml_file(config_path: Path) -> None:
     loader = configs.FeedConfigLoader(config_path)
 
     await loader.create_default_config_file()
@@ -82,7 +83,7 @@ async def test_default_toml_file(config_path: Path):
 
 
 @pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
-async def test_default_toml_file_io_error(config_path: Path):
+async def test_default_toml_file_io_error(config_path: Path) -> None:
     loader = configs.FeedConfigLoader(config_path)
 
     # create read-only file
@@ -93,7 +94,7 @@ async def test_default_toml_file_io_error(config_path: Path):
 
 
 @pytest.mark.skipif(system() == "Windows", reason="Currently not working on Windows")
-async def test_load_toml_file_io_error(config_path: Path):
+async def test_load_toml_file_io_error(config_path: Path) -> None:
     loader = configs.FeedConfigLoader(config_path)
 
     # create write-only file
@@ -106,8 +107,8 @@ async def test_load_toml_file_io_error(config_path: Path):
 async def test_create_feed_config(
     mocker: pytest_mock.MockFixture,
     feed_config_no_loader: models.FeedConfig,
-    toml_config_dict: Dict,
-):
+    toml_config_dict: Dict[str, Any],
+) -> None:
     loader = configs.FeedConfigLoader()
 
     mocked_load = mocker.patch(
@@ -125,8 +126,8 @@ async def test_create_feed_config(
 
 
 async def test_create_all_feed_configs(
-    mocker: pytest_mock.MockFixture, toml_config_dict: Dict
-):
+    mocker: pytest_mock.MockFixture, toml_config_dict: Dict[str, Any]
+) -> None:
     loader = configs.FeedConfigLoader()
 
     mocked_load = mocker.patch(
@@ -145,7 +146,7 @@ async def test_create_all_feed_configs(
         assert conf.feed_meta.game.name.lower() in toml_config_dict
 
 
-def test_create_invalid_feed_config():
+def test_create_invalid_feed_config() -> None:
     loader = configs.FeedConfigLoader()
 
     with pytest.raises(errors.ConfigFormatError, match="Could not find"):
