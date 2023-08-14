@@ -149,7 +149,7 @@ class HoyolabNews:
         if post["last_modify_time"] > 0:
             item["updated"] = post["last_modify_time"]
 
-        if len(post["image_list"]) > 0:
-            item["image"] = post["image_list"][0]["url"]
+        if len(post["cover_list"]) > 0:
+            item["image"] = post["cover_list"][0]["url"]
 
         return pydantic.parse_obj_as(FeedItem, item)

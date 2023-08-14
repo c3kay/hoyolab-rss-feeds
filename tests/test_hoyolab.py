@@ -151,7 +151,7 @@ async def test_get_feed_item(
         "last_modify_time": int(
             feed_item.updated.timestamp() if feed_item.updated else 0
         ),
-        "image_list": [{"url": str(feed_item.image)}],
+        "cover_list": [{"url": str(feed_item.image)}],
     }
 
     mocked_get_post = mocker.patch(

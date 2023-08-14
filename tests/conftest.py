@@ -337,5 +337,5 @@ def validate_hoyolab_post(post: Dict[str, Any], is_full_post: bool) -> None:
         assert type(post["post"]["subject"]) is str
         assert len(post["post"]["subject"]) > 0
 
-        assert type(post["image_list"]) is list
-        assert len(post["image_list"]) >= 0
+        assert type(post["cover_list"]) is list
+        assert len(post["cover_list"]) >= 0
