@@ -1,19 +1,9 @@
 name: Test
 
 on:
-  push:
+  pull_request:
     branches:
       - master
-    paths-ignore:
-      - '**.md'
-    tags-ignore:
-      - 'v[0-9].[0-9]+.[0-9]+'
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-  workflow_dispatch:
 
 jobs:
   lint:
@@ -58,52 +48,3 @@ jobs:
         run: python -m tox
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
-
-  build:
-    needs: [lint, test]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          # full history needed to determine correct version
-          fetch-depth: 0
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install build tools
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install build
-          python -m pip install "setuptools_scm[toml]"
-      - name: Show version
-        run: python -m setuptools_scm
-      - name: Build distribution
-        run: python -m build
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist-files
-          path: dist/*
-          if-no-files-found: error
-
-  deploy:
-    # only runs on master branch to avoid duplicate version uploads
-    if: github.ref == 'refs/heads/master'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: TestPyPI
-      url: https://test.pypi.org/project/hoyolab-rss-feeds
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: dist-files
-          path: dist
-      - name: Publish distribution to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
