@@ -133,7 +133,7 @@ async def test_get_feed_item(
         "post": {
             "post_id": str(feed_item.id),
             "subject": feed_item.title,
-            "content": "<p><br></p>{}".format(feed_item.content),
+            "content": feed_item.content,
             "official_type": feed_item.category.value,
             "created_at": int(feed_item.published.timestamp()),
         },
@@ -153,6 +153,22 @@ async def test_get_feed_item(
     mocked_get_post.assert_called()
 
     assert fetched_item == feed_item
+
+
+def test_transform_post():
+    post = {
+        "post": {
+            "content": '<p><br></p><img src="https://hoyolab-upload-private.hoyolab.com/test.jpg">'
+        }
+    }
+
+    expected = {
+        "post": {"content": '<img src="https://upload-os-bbs.hoyolab.com/test.jpg">'}
+    }
+
+    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+
+    assert transformed_post == expected
 
 
 # ---- HELPER FUNCTIONS ----
