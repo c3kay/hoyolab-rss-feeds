@@ -2,7 +2,8 @@ from datetime import datetime
 from datetime import timezone
 
 import aiohttp
-import langdetect
+import langdetect  # type: ignore
+import pydantic
 import pytest
 import pytest_mock
 
@@ -18,7 +19,7 @@ langdetect.DetectorFactory.seed = 0
 @pytest.mark.hoyolabapi
 async def test_api_post_endpoint(
     client_session: aiohttp.ClientSession, game: models.Game
-):
+) -> None:
     post_id = get_post_id(game)
     api = hoyolab.HoyolabNews(game)
     post = await api.get_post(client_session, post_id)
@@ -31,7 +32,7 @@ async def test_api_list_endpoint(
     client_session: aiohttp.ClientSession,
     game: models.Game,
     category: models.FeedItemCategory,
-):
+) -> None:
     api = hoyolab.HoyolabNews(game)
     news_list = await api.get_news_list(client_session, category, 2)
 
@@ -46,7 +47,7 @@ async def test_api_list_endpoint(
 @pytest.mark.xfail(reason="not accurate for all languages")
 async def test_language(
     client_session: aiohttp.ClientSession, language: models.Language
-):
+) -> None:
     # NOTE: The list endpoint is not checked due to insufficient text.
     # The text of the list endpoint is also not used for the feeds.
 
@@ -66,32 +67,39 @@ async def test_language(
 
 
 @pytest.mark.hoyolabapi
-async def test_request_errors(client_session: aiohttp.ClientSession):
+async def test_request_errors(client_session: aiohttp.ClientSession) -> None:
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
 
     # request error
-    error_url = "https://httpbin.org/status/500"
+    error_url = pydantic.parse_obj_as(
+        pydantic.HttpUrl, "https://httpbin.org/status/500"
+    )
     with pytest.raises(errors.HoyolabApiError, match="Could not request"):
         await api._request(client_session, {}, error_url)
 
     # decode error
-    error_url = "https://httpbin.org/html"
+    error_url = pydantic.parse_obj_as(pydantic.HttpUrl, "https://httpbin.org/html")
     with pytest.raises(errors.HoyolabApiError, match="Could not decode"):
         await api._request(client_session, {}, error_url)
 
     # unexpected response
-    error_url = "https://httpbin.org/json"
+    error_url = pydantic.parse_obj_as(pydantic.HttpUrl, "https://httpbin.org/json")
     with pytest.raises(errors.HoyolabApiError, match="Unexpected response"):
         await api._request(client_session, {}, error_url)
 
     # hoyolab error code
-    error_url = "https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList"
+    error_url = pydantic.parse_obj_as(
+        pydantic.HttpUrl,
+        "https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList",
+    )
     with pytest.raises(errors.HoyolabApiError):
         # missing params raise exception here
         await api._request(client_session, {}, error_url)
 
 
-async def test_get_latest_item_metas(mocker: pytest_mock.MockFixture, client_session):
+async def test_get_latest_item_metas(
+    mocker: pytest_mock.MockFixture, client_session: aiohttp.ClientSession
+) -> None:
     posts = [
         {"post": {"post_id": "42", "created_at": 1645564944}, "last_modify_time": 0},
         {
@@ -127,19 +135,23 @@ async def test_get_latest_item_metas(mocker: pytest_mock.MockFixture, client_ses
 
 
 async def test_get_feed_item(
-    mocker: pytest_mock.MockFixture, feed_item: models.FeedItem, client_session
-):
+    mocker: pytest_mock.MockFixture,
+    feed_item: models.FeedItem,
+    client_session: aiohttp.ClientSession,
+) -> None:
     post = {
         "post": {
             "post_id": str(feed_item.id),
             "subject": feed_item.title,
-            "content": "<p><br></p>{}".format(feed_item.content),
+            "content": feed_item.content,
             "official_type": feed_item.category.value,
             "created_at": int(feed_item.published.timestamp()),
         },
         "user": {"nickname": feed_item.author},
-        "last_modify_time": int(feed_item.updated.timestamp()),
-        "image_list": [{"url": str(feed_item.image)}],
+        "last_modify_time": int(
+            feed_item.updated.timestamp() if feed_item.updated else 0
+        ),
+        "cover_list": [{"url": str(feed_item.image)}],
     }
 
     mocked_get_post = mocker.patch(
@@ -153,6 +165,22 @@ async def test_get_feed_item(
     mocked_get_post.assert_called()
 
     assert fetched_item == feed_item
+
+
+def test_transform_post() -> None:
+    post = {
+        "post": {
+            "content": '<p><br></p><img src="https://hoyolab-upload-private.hoyolab.com/test.jpg">'
+        }
+    }
+
+    expected = {
+        "post": {"content": '<img src="https://upload-os-bbs.hoyolab.com/test.jpg">'}
+    }
+
+    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+
+    assert transformed_post == expected
 
 
 # ---- HELPER FUNCTIONS ----

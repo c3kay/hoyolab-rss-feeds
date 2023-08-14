@@ -1,6 +1,5 @@
 from datetime import datetime
-from typing import List
-from unittest.mock import MagicMock
+from typing import List, Any
 
 import aiohttp
 import pytest
@@ -15,9 +14,9 @@ from hoyolabrssfeeds.writers import JSONFeedFileWriter
 
 def test_game_feed_was_updated(
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
-):
+    mocked_writers: List[AbstractFeedFileWriter],
+    mocked_loader: AbstractFeedFileLoader,
+) -> None:
     feed = feeds.GameFeed(feed_meta, mocked_writers, mocked_loader)
 
     assert not feed.was_updated
@@ -25,17 +24,17 @@ def test_game_feed_was_updated(
 
 def test_same_path_warning(
     feed_meta: models.FeedMeta,
-    mocked_loader: MagicMock,
+    mocked_loader: AbstractFeedFileLoader,
     json_feed_file_writer_config: models.FeedFileWriterConfig,
-):
-    writer = JSONFeedFileWriter(json_feed_file_writer_config)
+) -> None:
+    writer: AbstractFeedFileWriter = JSONFeedFileWriter(json_feed_file_writer_config)
     duplicate_writers = [writer, writer]
 
     with pytest.warns(UserWarning, match="identical paths"):
         feeds.GameFeed(feed_meta, duplicate_writers, mocked_loader)
 
 
-def test_from_config(feed_config: models.FeedConfig):
+def test_from_config(feed_config: models.FeedConfig) -> None:
     game_feed = feeds.GameFeed.from_config(feed_config)
 
     assert game_feed._feed_meta == feed_config.feed_meta
@@ -50,7 +49,7 @@ def test_from_config(feed_config: models.FeedConfig):
     assert game_feed._feed_loader.config == feed_config.loader_config
 
 
-def test_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
+def test_from_config_no_loader(feed_config_no_loader: models.FeedConfig) -> None:
     game_feed = feeds.GameFeed.from_config(feed_config_no_loader)
 
     assert game_feed._feed_loader is not None
@@ -60,8 +59,10 @@ def test_from_config_no_loader(feed_config_no_loader: models.FeedConfig):
 def test_init_no_loader(
     feed_meta: models.FeedMeta,
     json_feed_file_writer_config: models.FeedFileWriterConfig,
-):
-    writers = [JSONFeedFileWriter(json_feed_file_writer_config)]
+) -> None:
+    writers: List[AbstractFeedFileWriter] = [
+        JSONFeedFileWriter(json_feed_file_writer_config)
+    ]
     game_feed = feeds.GameFeed(feed_meta, writers)
 
     assert game_feed._feed_loader.config.feed_type == models.FeedType.JSON
@@ -71,10 +72,10 @@ async def test_category_feed_new_item(
     mocker: pytest_mock.MockFixture,
     client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
+    mocked_writers: List[AbstractFeedFileWriter],
+    mocked_loader: AbstractFeedFileLoader,
     feed_item: models.FeedItem,
-):
+) -> None:
     feed_meta.category_size = 2
 
     new_item = feed_item.copy()
@@ -120,10 +121,10 @@ async def test_category_feed_updated_item(
     mocker: pytest_mock.MockFixture,
     client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
+    mocked_writers: List[AbstractFeedFileWriter],
+    mocked_loader: AbstractFeedFileLoader,
     feed_item: models.FeedItem,
-):
+) -> None:
     feed_meta.category_size = 2
 
     updated_item = feed_item.copy()
@@ -169,10 +170,10 @@ async def test_category_feed_unchanged(
     mocker: pytest_mock.MockFixture,
     client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
+    mocked_writers: List[AbstractFeedFileWriter],
+    mocked_loader: AbstractFeedFileLoader,
     feed_item: models.FeedItem,
-):
+) -> None:
     mocked_metas = mocker.patch(
         "hoyolabrssfeeds.feeds.HoyolabNews.get_latest_item_metas",
         spec=True,
@@ -203,11 +204,11 @@ async def test_category_feed_unchanged(
 async def test_create_feed(
     mocker: pytest_mock.MockFixture,
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
+    mocked_writers: List[Any],
+    mocked_loader: Any,
     category_feeds: List[List[models.FeedItem]],
     combined_feed: List[models.FeedItem],
-):
+) -> None:
     mocked_update_feed = mocker.patch(
         "hoyolabrssfeeds.feeds.GameFeed._update_category_feed",
         spec=True,
@@ -242,11 +243,11 @@ async def test_create_feed_unchanged(
     mocker: pytest_mock.MockFixture,
     client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
+    mocked_writers: List[Any],
+    mocked_loader: Any,
     category_feeds: List[List[models.FeedItem]],
     combined_feed: List[models.FeedItem],
-):
+) -> None:
     # set known feed items from file
     mocked_loader.get_feed_items.return_value = combined_feed
 
@@ -275,9 +276,9 @@ async def test_create_feed_one_category(
     client_session: aiohttp.ClientSession,
     feed_meta: models.FeedMeta,
     feed_item: models.FeedItem,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
-):
+    mocked_writers: List[Any],
+    mocked_loader: Any,
+) -> None:
     feed_meta.categories = [feed_item.category]
 
     mocked_update_feed = mocker.patch(
@@ -307,7 +308,7 @@ async def test_create_feed_one_category(
 
 def test_collection_from_config(
     feed_config: models.FeedConfig, feed_config_no_loader: models.FeedConfig
-):
+) -> None:
     # NOTE: there is currently no check for identical paths of multiple game feeds
     configs = [feed_config, feed_config_no_loader]
 
@@ -328,9 +329,9 @@ def test_collection_from_config(
 async def test_create_feed_collections(
     mocker: pytest_mock.MockFixture,
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
-):
+    mocked_writers: List[AbstractFeedFileWriter],
+    mocked_loader: AbstractFeedFileLoader,
+) -> None:
     mocked_create = mocker.patch(
         "hoyolabrssfeeds.feeds.GameFeed.create_feed", spec=True
     )
@@ -349,9 +350,9 @@ async def test_create_feed_collections(
 
 async def test_invalid_feed_collection(
     feed_meta: models.FeedMeta,
-    mocked_writers: List[MagicMock],
-    mocked_loader: MagicMock,
-):
+    mocked_writers: List[AbstractFeedFileWriter],
+    mocked_loader: AbstractFeedFileLoader,
+) -> None:
     with pytest.raises(ValueError):
         feeds.GameFeedCollection(
             [feed_meta, feed_meta],

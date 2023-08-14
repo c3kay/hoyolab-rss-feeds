@@ -4,7 +4,7 @@ from stat import S_IREAD
 from typing import List
 
 import aiofiles
-import atoma
+import atoma  # type: ignore
 import pytest
 
 from hoyolabrssfeeds import errors
@@ -15,7 +15,7 @@ from hoyolabrssfeeds import writers
 # ---- FACTORY TESTS ----
 
 
-def test_factory_feed_types():
+def test_factory_feed_types() -> None:
     factory = writers.FeedFileWriterFactory()
     expected = {models.FeedType.JSON, models.FeedType.ATOM}
 
@@ -25,7 +25,7 @@ def test_factory_feed_types():
 def test_factory_create_writer(
     json_feed_file_writer_config: models.FeedFileWriterConfig,
     atom_feed_file_writer_config: models.FeedFileWriterConfig,
-):
+) -> None:
     factory = writers.FeedFileWriterFactory()
     json_writer = factory.create_writer(json_feed_file_writer_config)
 
@@ -43,7 +43,7 @@ def test_factory_create_writer(
 
 def test_json_feed_writer_config(
     json_feed_file_writer_config: models.FeedFileWriterConfig,
-):
+) -> None:
     writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
 
     assert writer.config == json_feed_file_writer_config
@@ -53,7 +53,7 @@ async def test_json_feed_writer(
     json_feed_file_writer_config: models.FeedFileWriterConfig,
     feed_meta: models.FeedMeta,
     feed_item_list: List[models.FeedItem],
-):
+) -> None:
     writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
 
     await writer.write_feed(feed_meta, feed_item_list)
@@ -75,7 +75,7 @@ async def test_json_feed_writer(
 async def test_write_json_feed_io_error(
     json_feed_file_writer_config: models.FeedFileWriterConfig,
     feed_meta: models.FeedMeta,
-):
+) -> None:
     writer = writers.JSONFeedFileWriter(json_feed_file_writer_config)
 
     # read-only file
@@ -90,7 +90,7 @@ async def test_write_json_feed_io_error(
 
 def test_atom_feed_writer_config(
     atom_feed_file_writer_config: models.FeedFileWriterConfig,
-):
+) -> None:
     writer = writers.JSONFeedFileWriter(atom_feed_file_writer_config)
 
     assert writer.config == atom_feed_file_writer_config
@@ -100,7 +100,7 @@ async def test_atom_feed_writer(
     atom_feed_file_writer_config: models.FeedFileWriterConfig,
     feed_meta: models.FeedMeta,
     feed_item_list: List[models.FeedItem],
-):
+) -> None:
     writer = writers.AtomFeedFileWriter(atom_feed_file_writer_config)
 
     await writer.write_feed(feed_meta, feed_item_list)
@@ -121,7 +121,7 @@ async def test_atom_feed_writer(
 async def test_write_atom_feed_io_error(
     atom_feed_file_writer_config: models.FeedFileWriterConfig,
     feed_meta: models.FeedMeta,
-):
+) -> None:
     writer = writers.AtomFeedFileWriter(atom_feed_file_writer_config)
 
     # read-only file

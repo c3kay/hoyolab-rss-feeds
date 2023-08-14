@@ -52,6 +52,23 @@ class HoyolabNews:
 
         return response_json
 
+    @staticmethod
+    def _transform_post(post: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform (i.e. apply fixes) post of Hoyolab API response."""
+
+        # remove empty leading paragraphs
+        if post["post"]["content"].startswith(
+            ("<p></p>", "<p>&nbsp;</p>", "<p><br></p>")
+        ):
+            post["post"]["content"] = post["post"]["content"].partition("</p>")[2]
+
+        # fix private links
+        post["post"]["content"] = post["post"]["content"].replace(
+            "hoyolab-upload-private", "upload-os-bbs"
+        )
+
+        return post
+
     async def get_news_list(
         self,
         session: aiohttp.ClientSession,
@@ -85,7 +102,7 @@ class HoyolabNews:
         response = await self._request(session, params, url)
         post: Dict[str, Any] = response["data"]["post"]
 
-        return post
+        return self._transform_post(post)
 
     async def get_latest_item_metas(
         self,
@@ -120,17 +137,11 @@ class HoyolabNews:
 
         post = await self.get_post(session, post_id)
 
-        content = post["post"]["content"]
-
-        # remove empty leading paragraphs
-        if content.startswith(("<p></p>", "<p>&nbsp;</p>", "<p><br></p>")):
-            content = content.partition("</p>")[2]
-
         item = {
             "id": post["post"]["post_id"],
             "title": post["post"]["subject"],
             "author": post["user"]["nickname"],
-            "content": content,
+            "content": post["post"]["content"],
             "category": post["post"]["official_type"],
             "published": post["post"]["created_at"],
         }
@@ -138,7 +149,7 @@ class HoyolabNews:
         if post["last_modify_time"] > 0:
             item["updated"] = post["last_modify_time"]
 
-        if len(post["image_list"]) > 0:
-            item["image"] = post["image_list"][0]["url"]
+        if len(post["cover_list"]) > 0:
+            item["image"] = post["cover_list"][0]["url"]
 
         return pydantic.parse_obj_as(FeedItem, item)
