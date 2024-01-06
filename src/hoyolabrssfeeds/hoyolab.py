@@ -1,3 +1,4 @@
+import re
 from typing import Any
 from typing import Dict
 from typing import List
@@ -66,6 +67,11 @@ class HoyolabNews:
         post["post"]["content"] = post["post"]["content"].replace(
             "hoyolab-upload-private", "upload-os-bbs"
         )
+
+        # weird hoyolab bug/feature, where the content html is just a language code.
+        # could be fixed by parsing the structured_content and creating html from it.
+        if re.fullmatch(r"^[a-z]{2}-[a-z]{2}$", post["post"]["content"]):
+            post["post"]["content"] = "<em>Content not available...</em>"
 
         return post
 
