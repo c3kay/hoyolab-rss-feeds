@@ -24,19 +24,10 @@ from hoyolabrssfeeds.writers import AbstractFeedFileWriter
 
 
 @pytest.fixture()
-def my_loop(event_loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
-    if system() == "Windows":
-        # default policy not working on windows
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
-
-    return event_loop
-
-
-@pytest.fixture()
 async def client_session(
-    my_loop: asyncio.AbstractEventLoop,
+    event_loop: asyncio.AbstractEventLoop,
 ) -> AsyncGenerator[aiohttp.ClientSession, Any]:
-    async with aiohttp.ClientSession(loop=my_loop, raise_for_status=True) as cs:
+    async with aiohttp.ClientSession(loop=event_loop, raise_for_status=True) as cs:
         yield cs
 
 
