@@ -2,7 +2,6 @@ import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
-from platform import system
 from typing import Any
 from typing import AsyncGenerator
 from typing import Dict
@@ -24,10 +23,9 @@ from hoyolabrssfeeds.writers import AbstractFeedFileWriter
 
 
 @pytest.fixture()
-async def client_session(
-    event_loop: asyncio.AbstractEventLoop,
-) -> AsyncGenerator[aiohttp.ClientSession, Any]:
-    async with aiohttp.ClientSession(loop=event_loop, raise_for_status=True) as cs:
+async def client_session() -> AsyncGenerator[aiohttp.ClientSession, Any]:
+    loop = asyncio.get_running_loop()
+    async with aiohttp.ClientSession(loop=loop, raise_for_status=True) as cs:
         yield cs
 
 
