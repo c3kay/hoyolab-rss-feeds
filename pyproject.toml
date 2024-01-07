@@ -34,22 +34,22 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary"
 ]
 dependencies = [
-    "aiohttp >= 3.8.4",
-    "aiofiles >= 23.1.0",
-    "pydantic >= 1.10.11, < 2",
-    'tomli >= 2.0.1 ; python_version < "3.11"'
+    "aiohttp == 3.8.4",
+    "aiofiles == 23.1.0",
+    "pydantic == 1.10.11, < 2",
+    'tomli == 2.0.1 ; python_version < "3.11"'
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "tox >= 4.6.4",
-    "pytest >= 7.4.0",
-    "pytest-asyncio >= 0.21.0",
-    "pytest-cov >= 4.1.0",
-    "pytest-mock >= 3.11.1",
-    "atoma >= 0.0.17",
-    "langdetect >= 1.0.9"
+    "tox == 4.6.4",
+    "pytest == 7.4.0",
+    "pytest-asyncio == 0.21.0",
+    "pytest-cov == 4.1.0",
+    "pytest-mock == 3.11.1",
+    "atoma == 0.0.17",
+    "langdetect == 1.0.9"
 ]
 
 [project.urls]
