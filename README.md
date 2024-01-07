@@ -40,7 +40,7 @@ python -m hoyolabrssfeeds
 ```
 
 If no configuration can be found, the application will create a default config
-in your current directory (`./hoyolab-rss-feeds.toml`) and will exit afterwards.
+in your current directory (`./hoyolab-rss-feeds.toml`) and will exit afterward.
 
 You can specify a path for the config file with a parameter:
 
@@ -102,7 +102,7 @@ one format or both.
 
 Entries defined at root level are considered default values and will apply to every
 game section. The `feed` key can only be used in a game section. All other keys
-can be defined at root level and they can be overwritten by a game section.
+can be defined at root level, and they can be overwritten by a game section.
 
 The `categories` list defines the selected Hoyolab categories (*Info*, *Event* and
 *Notices*) for this feed. If this entry is omitted, all categories are selected.
