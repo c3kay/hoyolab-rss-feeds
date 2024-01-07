@@ -3,6 +3,7 @@
 .tox/
 venv/
 dist/
+build/
 src/*.egg-info/
 
 # coverage files
