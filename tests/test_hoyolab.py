@@ -167,10 +167,20 @@ async def test_get_feed_item(
     assert fetched_item == feed_item
 
 
-def test_transform_post() -> None:
+def test_leading_line_breaks() -> None:
+    post = {"post": {"content": "<p><br></p>Hello World"}}
+
+    expected = {"post": {"content": "Hello World"}}
+
+    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+
+    assert transformed_post == expected
+
+
+def test_private_link_bug() -> None:
     post = {
         "post": {
-            "content": '<p><br></p><img src="https://hoyolab-upload-private.hoyolab.com/test.jpg">'
+            "content": '<img src="https://hoyolab-upload-private.hoyolab.com/test.jpg">'
         }
     }
 
@@ -181,6 +191,15 @@ def test_transform_post() -> None:
     transformed_post = hoyolab.HoyolabNews._transform_post(post)
 
     assert transformed_post == expected
+
+
+def test_content_html_bug() -> None:
+    post = {"post": {"content": "en-us"}}
+
+    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+
+    # test that the content was replaced/fixed
+    assert transformed_post["post"]["content"] != "en-us"
 
 
 # ---- HELPER FUNCTIONS ----

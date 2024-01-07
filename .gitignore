@@ -1,10 +1,12 @@
 # directories
 .pytest_cache/
 .tox/
+__pycache__
 venv/
 dist/
+build/
 src/*.egg-info/
 
 # coverage files
-*/.coverage
-*/coverage.xml
+.coverage
+coverage.xml

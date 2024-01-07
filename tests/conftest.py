@@ -2,11 +2,9 @@ import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
-from platform import system
 from typing import Any
 from typing import AsyncGenerator
 from typing import Dict
-from typing import Generator
 from typing import List
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
@@ -21,33 +19,13 @@ from hoyolabrssfeeds.loaders import AbstractFeedFileLoader
 from hoyolabrssfeeds.writers import AbstractFeedFileWriter
 
 
-# ---- SESSION FIXTURES ----
+# ---- GENERAL FIXTURES ----
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, Any, None]:
-    if system() == "Windows":
-        # default policy not working on windows
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
-
-    loop = asyncio.get_event_loop()
-
-    yield loop
-
-    pending = asyncio.tasks.all_tasks(loop)
-    loop.run_until_complete(asyncio.gather(*pending))
-    loop.run_until_complete(asyncio.sleep(1))
-
-    loop.close()
-
-    # https://stackoverflow.com/questions/65740542/exception-ignored-runtimeerror-event-loop-is-closed-when-using-pytest-asynci
-
-
-@pytest.fixture(scope="session")
-async def client_session(
-    event_loop: asyncio.AbstractEventLoop,
-) -> AsyncGenerator[aiohttp.ClientSession, Any]:
-    async with aiohttp.ClientSession(loop=event_loop, raise_for_status=True) as cs:
+@pytest.fixture()
+async def client_session() -> AsyncGenerator[aiohttp.ClientSession, Any]:
+    loop = asyncio.get_running_loop()
+    async with aiohttp.ClientSession(loop=loop, raise_for_status=True) as cs:
         yield cs
 
 
