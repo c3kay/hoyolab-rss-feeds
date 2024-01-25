@@ -172,7 +172,8 @@ def test_leading_line_breaks() -> None:
 
     expected = {"post": {"content": "Hello World"}}
 
-    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+    api = hoyolab.HoyolabNews(models.Game.GENSHIN)
+    transformed_post = api._transform_post(post)
 
     assert transformed_post == expected
 
@@ -188,7 +189,8 @@ def test_private_link_bug() -> None:
         "post": {"content": '<img src="https://upload-os-bbs.hoyolab.com/test.jpg">'}
     }
 
-    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+    api = hoyolab.HoyolabNews(models.Game.GENSHIN)
+    transformed_post = api._transform_post(post)
 
     assert transformed_post == expected
 
@@ -196,10 +198,39 @@ def test_private_link_bug() -> None:
 def test_content_html_bug() -> None:
     post = {"post": {"content": "en-us"}}
 
-    transformed_post = hoyolab.HoyolabNews._transform_post(post)
+    api = hoyolab.HoyolabNews(models.Game.GENSHIN)
+    transformed_post = api._transform_post(post)
 
     # test that the content was replaced/fixed
     assert transformed_post["post"]["content"] != "en-us"
+
+
+def test_structured_content_parser() -> None:
+    raw_sc = """
+        [{"insert":"Hello World!"},
+        {"insert":"Hello bold World!","attributes":{"bold":true}},
+        {"insert":"Hello italic World!","attributes":{"italic":true}},
+        {"insert":"\\n2","attributes":{"align":"center"}},
+        {"insert":"Hello Link!","attributes":{"link":"https://example.com"}},
+        {"insert":{"image":"https://example.com/image.jpg"}},
+        {"insert":{"video":"https://example.com/video.mp4"}}]
+    """
+
+    expected_html = """
+        <p>Hello World!</p>
+        <p><strong>Hello bold World!</strong></p>
+        <p><em>Hello italic World!</em></p>
+        <p><br></p>
+        <p><a href="https://example.com">Hello Link!</a></p>
+        <img src="https://example.com/image.jpg">
+        <iframe src="https://example.com/video.mp4"></iframe>
+    """.replace(
+        "    ", ""
+    ).replace(
+        "\n", ""
+    )
+
+    assert hoyolab.HoyolabNews._parse_structured_content(raw_sc) == expected_html
 
 
 # ---- HELPER FUNCTIONS ----
