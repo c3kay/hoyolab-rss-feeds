@@ -1,5 +1,7 @@
+## New Features
+
+- Added simple logging (for level INFO)
+
 ## Fixes
 
-- Added temporary notification message for #10 
-- Updated dependencies
-- Minor bug fixes 
+- Added a Hoyolab structured content parser to fix #10
