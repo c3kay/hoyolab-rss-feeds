@@ -312,6 +312,9 @@ def validate_hoyolab_post(post: Dict[str, Any], is_full_post: bool) -> None:
         assert type(post["post"]["content"]) is str
         assert len(post["post"]["content"]) > 0
 
+        assert type(post["post"]["structured_content"]) is str
+        assert len(post["post"]["structured_content"]) > 0
+
         assert type(post["post"]["subject"]) is str
         assert len(post["post"]["subject"]) > 0
 

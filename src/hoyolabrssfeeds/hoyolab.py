@@ -1,8 +1,8 @@
+import json
 import re
 from typing import Any
 from typing import Dict
 from typing import List
-import json
 
 import aiohttp
 import pydantic
@@ -81,7 +81,7 @@ class HoyolabNews:
     def _parse_structured_content(structured_content: str) -> str:
         """Parse the Hoyolab structured content and return the constructed HTML."""
 
-        structured_content = re.sub(r"(\\)?\\n(\d)?", "<br>", structured_content)
+        structured_content = re.sub(r"(\\)?\\n", "<br>", structured_content)
         html_content = []
 
         try:
