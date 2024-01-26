@@ -196,7 +196,7 @@ def test_private_link_bug() -> None:
 
 
 def test_content_html_bug() -> None:
-    post = {"post": {"content": "en-us"}}
+    post = {"post": {"content": "en-us", "structured_content": "[]"}}
 
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
     transformed_post = api._transform_post(post)
@@ -210,7 +210,7 @@ def test_structured_content_parser() -> None:
         [{"insert":"Hello World!"},
         {"insert":"Hello bold World!","attributes":{"bold":true}},
         {"insert":"Hello italic World!","attributes":{"italic":true}},
-        {"insert":"\\n2","attributes":{"align":"center"}},
+        {"insert":"\\n","attributes":{"align":"center"}},
         {"insert":"Hello Link!","attributes":{"link":"https://example.com"}},
         {"insert":{"image":"https://example.com/image.jpg"}},
         {"insert":{"video":"https://example.com/video.mp4"}}]

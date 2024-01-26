@@ -23,6 +23,7 @@ def test_game_feed_was_updated(
 
 
 def test_same_path_warning(
+    caplog: pytest.LogCaptureFixture,
     feed_meta: models.FeedMeta,
     mocked_loader: AbstractFeedFileLoader,
     json_feed_file_writer_config: models.FeedFileWriterConfig,
@@ -30,8 +31,9 @@ def test_same_path_warning(
     writer: AbstractFeedFileWriter = JSONFeedFileWriter(json_feed_file_writer_config)
     duplicate_writers = [writer, writer]
 
-    with pytest.warns(UserWarning, match="identical paths"):
+    with caplog.at_level("WARNING"):
         feeds.GameFeed(feed_meta, duplicate_writers, mocked_loader)
+        assert "identical paths" in caplog.text
 
 
 def test_from_config(feed_config: models.FeedConfig) -> None:

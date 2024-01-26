@@ -281,6 +281,7 @@ def mocked_loader(mocker: pytest_mock.MockFixture) -> MagicMock:
 @pytest.fixture
 def mocked_writers(mocker: pytest_mock.MockFixture) -> List[MagicMock]:
     writer: MagicMock = mocker.create_autospec(AbstractFeedFileWriter, instance=True)
+    writer.config.feed_type = models.FeedType.JSON  # needed for logger calls
 
     return [writer]
 
