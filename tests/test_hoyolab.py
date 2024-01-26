@@ -232,6 +232,9 @@ def test_structured_content_parser() -> None:
 
     assert hoyolab.HoyolabNews._parse_structured_content(raw_sc) == expected_html
 
+    with pytest.raises(errors.HoyolabApiError):
+        hoyolab.HoyolabNews._parse_structured_content("###")
+
 
 # ---- HELPER FUNCTIONS ----
 

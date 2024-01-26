@@ -1,6 +1,6 @@
 ## New Features
 
-- Added simple logging (for level INFO)
+- Added simple logging (for level `INFO`)
 
 ## Fixes
 
