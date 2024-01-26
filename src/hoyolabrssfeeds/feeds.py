@@ -1,5 +1,5 @@
 import asyncio
-import warnings
+import logging
 from typing import List
 from typing import Optional
 from typing import Type
@@ -21,6 +21,8 @@ from .writers import FeedFileWriterFactory
 _GF = TypeVar("_GF", bound="GameFeed")
 _GFC = TypeVar("_GFC", bound="GameFeedCollection")
 
+logger = logging.getLogger(__name__)
+
 
 class GameFeed:
     """Feed generator for a single game."""
@@ -34,10 +36,9 @@ class GameFeed:
         # warn if identical paths for writers are found
         writer_paths = [str(writer.config.path) for writer in feed_writers]
         if len(writer_paths) != len(set(writer_paths)):
-            warnings.warn(
-                "Writers for {} game feed contain identical paths".format(
-                    feed_meta.game.name.title()
-                )
+            logger.warning(
+                'Writers for "%s" feed contain identical paths!',
+                feed_meta.title or feed_meta.game.name.title()
             )
 
         if feed_loader is None:
@@ -79,6 +80,13 @@ class GameFeed:
     ) -> None:
         """Create or update a feed and write it to files."""
 
+        logger.info(
+            '%s "%s" feed in %s format...',
+            "Updating" if self._feed_loader.config.path.exists() else "Creating",
+            self._feed_meta.title or self._feed_meta.game.name.title(),
+            " & ".join([w.config.feed_type.title() for w in self._feed_writers])
+        )
+
         local_session = session or aiohttp.ClientSession()
         feed_categories = self._feed_meta.categories or [c for c in FeedItemCategory]
         self._was_updated = False
@@ -115,6 +123,16 @@ class GameFeed:
                 ]
             )
 
+            logger.info(
+                'The "%s" feed was successfully updated.',
+                self._feed_meta.title or self._feed_meta.game.name.title(),
+            )
+        else:
+            logger.info(
+                'The "%s" feed is still uptodate.',
+                self._feed_meta.title or self._feed_meta.game.name.title(),
+            )
+
     async def _update_category_feed(
         self,
         session: aiohttp.ClientSession,
@@ -143,6 +161,12 @@ class GameFeed:
         }
 
         if len(new_or_outdated_ids) > 0:
+            logger.info(
+                'Found %d new or outdated posts for "%s" category.',
+                len(new_or_outdated_ids),
+                category.name.title()
+            )
+
             # remove outdated items from feed because they will be re-fetched
             category_items = list(
                 filter(lambda item: item.id not in new_or_outdated_ids, category_items)
