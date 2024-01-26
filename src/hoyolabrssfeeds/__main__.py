@@ -17,10 +17,7 @@ async def create_feeds(config_path: Optional[Path] = None) -> None:
 
     if not config_loader.path.exists():
         await config_loader.create_default_config_file()
-        logger.info(
-            'Default config file created at %s.',
-            config_loader.path.resolve()
-        )
+        logger.info("Default config file created at %s.", config_loader.path.resolve())
         return
 
     feed_configs = await config_loader.get_all_feed_configs()
@@ -42,7 +39,12 @@ def cli() -> None:
     )
 
     arg_parser.add_argument(
-        "-l", "--log-path", required=False, default=None, help="Path to the written log file", type=Path
+        "-l",
+        "--log-path",
+        required=False,
+        default=None,
+        help="Path to the written log file",
+        type=Path,
     )
 
     args = arg_parser.parse_args()
@@ -51,7 +53,7 @@ def cli() -> None:
         filename=args.log_path,
         filemode="a",
         format="%(asctime)s | %(levelname)-8s | %(message)s",
-        level=logging.INFO
+        level=logging.INFO,
     )
 
     asyncio.run(create_feeds(args.config_path))
