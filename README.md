@@ -53,10 +53,11 @@ hoyolab-rss-feeds -c path/to/config.toml
 It is also possible to generate the feeds via code:
 
 ```python
+from pathlib import Path
 from hoyolabrssfeeds import FeedConfigLoader, GameFeed, GameFeedCollection, Game
 
 async def generate_feeds():
-    loader = FeedConfigLoader("path/to/config.toml")
+    loader = FeedConfigLoader(Path("path/to/config.toml"))
     
     # all games in config
     all_configs = await loader.get_all_feed_configs()
@@ -112,6 +113,20 @@ for each feed.
 **Note:** When using Windows file paths (like `C:\\path\to\config.toml`), single quotes
 should be used to avoid wrong auto-escaping of backslashes. More info about the TOML
 format can be found in the [official documentation](https://toml.io/en/).
+
+### Logging
+
+Simple logs at level `INFO` are written to the terminal by default. If a file path is given
+via parameter (`-l /path/to/out.log`), the logs are written to this file.
+
+If the application is run via code, the logger must be 
+[configured](https://docs.python.org/3.11/howto/logging.html#configuring-logging) separately. 
+The application specific logger is available by:
+
+```python
+import logging
+logger = logging.getLogger("hoyolabrssfeeds")
+```
 
 ### Options
 

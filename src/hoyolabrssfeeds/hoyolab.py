@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Any
 from typing import Dict
@@ -53,9 +54,15 @@ class HoyolabNews:
 
         return response_json
 
-    @staticmethod
-    def _transform_post(post: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_post(self, post: Dict[str, Any]) -> Dict[str, Any]:
         """Transform (i.e. apply fixes) post of Hoyolab API response."""
+
+        # weird hoyolab bug/feature, where the content html is just a language code.
+        # this needs to be first to also apply the other fixes.
+        if re.fullmatch(r"^[a-z]{2}-[a-z]{2}$", post["post"]["content"]):
+            post["post"]["content"] = self._parse_structured_content(
+                post["post"]["structured_content"]
+            )
 
         # remove empty leading paragraphs
         if post["post"]["content"].startswith(
@@ -68,12 +75,47 @@ class HoyolabNews:
             "hoyolab-upload-private", "upload-os-bbs"
         )
 
-        # weird hoyolab bug/feature, where the content html is just a language code.
-        # could be fixed by parsing the structured_content and creating html from it.
-        if re.fullmatch(r"^[a-z]{2}-[a-z]{2}$", post["post"]["content"]):
-            post["post"]["content"] = "<em>Content not available...</em>"
-
         return post
+
+    @staticmethod
+    def _parse_structured_content(structured_content: str) -> str:
+        """Parse the Hoyolab structured content and return the constructed HTML."""
+
+        structured_content = re.sub(r"(\\)?\\n", "<br>", structured_content)
+        html_content = []
+
+        try:
+            json_content: List[Dict[str, Any]] = json.loads(structured_content)
+        except json.JSONDecodeError as err:
+            raise HoyolabApiError(
+                "Could not decode structured content to JSON!"
+            ) from err
+
+        for node in json_content:
+            if type(node["insert"]) is str:
+                if "attributes" in node and "link" in node["attributes"]:
+                    text = '<a href="{}">{}</a>'.format(
+                        node["attributes"]["link"], node["insert"]
+                    )
+                else:
+                    text = node["insert"]
+
+                if "attributes" in node and "bold" in node["attributes"]:
+                    text = "<p><strong>{}</strong></p>".format(text)
+                elif "attributes" in node and "italic" in node["attributes"]:
+                    text = "<p><em>{}</em></p>".format(text)
+                else:
+                    text = "<p>{}</p>".format(text)
+
+                html_content.append(text)
+            elif "image" in node["insert"]:
+                html_content.append('<img src="{}">'.format(node["insert"]["image"]))
+            elif "video" in node["insert"]:
+                html_content.append(
+                    '<iframe src="{}"></iframe>'.format(node["insert"]["video"])
+                )
+
+        return "".join(html_content)
 
     async def get_news_list(
         self,

@@ -281,6 +281,7 @@ def mocked_loader(mocker: pytest_mock.MockFixture) -> MagicMock:
 @pytest.fixture
 def mocked_writers(mocker: pytest_mock.MockFixture) -> List[MagicMock]:
     writer: MagicMock = mocker.create_autospec(AbstractFeedFileWriter, instance=True)
+    writer.config.feed_type = models.FeedType.JSON  # needed for logger calls
 
     return [writer]
 
@@ -311,6 +312,9 @@ def validate_hoyolab_post(post: Dict[str, Any], is_full_post: bool) -> None:
 
         assert type(post["post"]["content"]) is str
         assert len(post["post"]["content"]) > 0
+
+        assert type(post["post"]["structured_content"]) is str
+        assert len(post["post"]["structured_content"]) > 0
 
         assert type(post["post"]["subject"]) is str
         assert len(post["post"]["subject"]) > 0
