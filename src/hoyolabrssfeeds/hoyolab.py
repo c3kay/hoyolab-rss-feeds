@@ -64,6 +64,20 @@ class HoyolabNews:
                 post["post"]["structured_content"]
             )
 
+        # native/local video post
+        if (
+            "view_type" in post["post"]
+            and post["post"]["view_type"] == 5
+            and post["video"] is not None
+        ):
+            post["post"][
+                "content"
+            ] = '<video src="{src}" poster="{poster}" controls playsinline>Watch the video here: {src}</video><p>{desc}</p>'.format(
+                src=post["video"]["url"],
+                poster=post["video"]["cover"],
+                desc=post["post"]["desc"],
+            )
+
         # remove empty leading paragraphs
         if post["post"]["content"].startswith(
             ("<p></p>", "<p>&nbsp;</p>", "<p><br></p>")
