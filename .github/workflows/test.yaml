@@ -46,5 +46,7 @@ jobs:
           python -m pip install "tox >= 3.26.0"
       - name: Run tests via tox
         run: python -m tox
-      - name: Upload code coverage
+      - name: Upload to CodeCov
         uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
