@@ -142,9 +142,11 @@ class GameFeed:
         """Create or update a specific category feed."""
 
         known_ids = {
-            item.id: item.published
-            if item.updated is None
-            else max(item.published, item.updated)
+            item.id: (
+                item.published
+                if item.updated is None
+                else max(item.published, item.updated)
+            )
             for item in category_items
             if item.category == category
         }

@@ -236,6 +236,29 @@ def test_structured_content_parser() -> None:
         hoyolab.HoyolabNews._parse_structured_content("###")
 
 
+def test_video_post() -> None:
+    post = {
+        "post": {
+            "content": '{"video": "https://example.com/video.mp4"}',
+            "view_type": 5,
+            "desc": "Hello world!",
+        },
+        "video": {
+            "url": "https://example.com/video.mp4",
+            "cover": "https://example.com/cover.jpg",
+        },
+    }
+
+    api = hoyolab.HoyolabNews(models.Game.GENSHIN)
+    transformed_post = api._transform_post(post)
+    expected = (
+        '<video src="https://example.com/video.mp4" poster="https://example.com/cover.jpg" controls playsinline>Watch '
+        "the video here: https://example.com/video.mp4</video><p>Hello world!</p>"
+    )
+
+    assert transformed_post["post"]["content"] == expected
+
+
 # ---- HELPER FUNCTIONS ----
 
 

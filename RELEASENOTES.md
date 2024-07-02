@@ -1,7 +1,8 @@
-## New Features
+## Changes
 
-- Added simple logging (for level `INFO`)
+- Added support for python 3.12
+  - Support for python 3.8 will be dropped in the next version
 
 ## Fixes
 
-- Added a Hoyolab structured content parser to fix #10
+- Added fix for native hoyolab video posts (#13)

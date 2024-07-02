@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools == 69.0.2", "setuptools_scm[toml] == 8.0.4"]
+requires = ["setuptools == 70.2.0", "setuptools_scm[toml] == 8.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -22,10 +22,10 @@ keywords = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
@@ -34,8 +34,8 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary"
 ]
 dependencies = [
-    "aiohttp == 3.9.2",
-    "aiofiles == 23.2.1",
+    "aiohttp == 3.9.5",
+    "aiofiles == 24.1.0",
     "pydantic == 1.10.13, < 2",
     'tomli == 2.0.1 ; python_version < "3.11"'
 ]
@@ -44,17 +44,17 @@ dynamic = ["version"]
 [project.optional-dependencies]
 dev = [
     "tox == 4.11.4",
-    "pytest == 7.4.4",
-    "pytest-asyncio == 0.23.3",
-    "pytest-cov == 4.1.0",
-    "pytest-mock == 3.12.0",
+    "pytest == 8.2.2",
+    "pytest-asyncio == 0.23.7",
+    "pytest-cov == 5.0.0",
+    "pytest-mock == 3.14.0",
     "atoma == 0.0.17",
     "langdetect == 1.0.9"
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/c3kay/hoyolab-rss-feeds"
-"Tracker" = "https://github.com/c3kay/hoyolab-rss-feeds/issues"
+"Repository" = "https://github.com/c3kay/hoyolab-rss-feeds"
+"Homepage" = "https://c3kay.de/hoyolab-rss-feeds"
 
 [project.scripts]
 hoyolab-rss-feeds = "hoyolabrssfeeds.__main__:cli"
