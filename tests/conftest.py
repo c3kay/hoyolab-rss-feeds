@@ -191,9 +191,11 @@ def json_feed_items(feed_item_list: List[models.FeedItem]) -> Dict[str, Any]:
                 "tags": [feed_item.category.name.title()],
                 "content_html": feed_item.content,
                 "date_published": feed_item.published.astimezone().isoformat(),
-                "date_modified": feed_item.updated.astimezone().isoformat()
-                if feed_item.updated
-                else "",
+                "date_modified": (
+                    feed_item.updated.astimezone().isoformat()
+                    if feed_item.updated
+                    else ""
+                ),
                 "image": feed_item.image,
             }
             for feed_item in feed_item_list

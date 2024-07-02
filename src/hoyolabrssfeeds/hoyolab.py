@@ -70,12 +70,13 @@ class HoyolabNews:
             and post["post"]["view_type"] == 5
             and post["video"] is not None
         ):
-            post["post"][
-                "content"
-            ] = '<video src="{src}" poster="{poster}" controls playsinline>Watch the video here: {src}</video><p>{desc}</p>'.format(
-                src=post["video"]["url"],
-                poster=post["video"]["cover"],
-                desc=post["post"]["desc"],
+            post["post"]["content"] = (
+                '<video src="{src}" poster="{poster}" controls playsinline>Watch the video here: {src}</video><p>'
+                "{desc}</p>".format(
+                    src=post["video"]["url"],
+                    poster=post["video"]["cover"],
+                    desc=post["post"]["desc"],
+                )
             )
 
         # remove empty leading paragraphs

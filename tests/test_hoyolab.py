@@ -253,7 +253,7 @@ def test_video_post() -> None:
     transformed_post = api._transform_post(post)
     expected = (
         '<video src="https://example.com/video.mp4" poster="https://example.com/cover.jpg" controls playsinline>Watch '
-        'the video here: https://example.com/video.mp4</video><p>Hello world!</p>'
+        "the video here: https://example.com/video.mp4</video><p>Hello world!</p>"
     )
 
     assert transformed_post["post"]["content"] == expected
