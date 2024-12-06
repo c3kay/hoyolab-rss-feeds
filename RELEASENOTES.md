@@ -1,8 +1,7 @@
 ## Changes
 
-- Added support for python 3.12
-  - Support for python 3.8 will be dropped in the next version
+- Added a `summary` field for feed items in both Atom and JSON-Feed format (#15)
 
 ## Fixes
 
-- Added fix for native hoyolab video posts (#13)
+- Updated dependencies
