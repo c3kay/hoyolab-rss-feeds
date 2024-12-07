@@ -205,10 +205,12 @@ class HoyolabNews:
             "title": post["post"]["subject"],
             "author": post["user"]["nickname"],
             "content": post["post"]["content"],
-            "summary": post["post"]["desc"],
             "category": post["post"]["official_type"],
             "published": post["post"]["created_at"],
         }
+
+        if "desc" in post["post"] and len(post["post"]["desc"]) > 0:
+            item["summary"] = post["post"]["desc"]
 
         if post["last_modify_time"] > 0:
             item["updated"] = post["last_modify_time"]

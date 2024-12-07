@@ -104,11 +104,11 @@ class FeedItem(MyBaseModel):
     title: str
     author: str
     content: str
-    summary: str
     category: FeedItemCategory
     published: datetime
     updated: Optional[datetime] = None
     image: Optional[HttpUrl] = None
+    summary: Optional[str] = None
 
 
 class FeedItemMeta(MyBaseModel):
