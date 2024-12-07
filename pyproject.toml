@@ -34,10 +34,10 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary"
 ]
 dependencies = [
-    "aiohttp == 3.9.5",
+    "aiohttp == 3.11.10",
     "aiofiles == 24.1.0",
     "pydantic >= 1.10.0, < 2",
-    'tomli == 2.0.1 ; python_version < "3.11"'
+    'tomli == 2.2.1 ; python_version < "3.11"'
 ]
 dynamic = ["version"]
 
