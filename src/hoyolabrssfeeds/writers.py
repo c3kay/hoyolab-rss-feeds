@@ -95,9 +95,11 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
             "authors": [{"name": item.author}],
             "tags": [item.category.name.title()],
             "content_html": item.content,
-            "summary": item.summary,
             "date_published": item.published.astimezone().isoformat(),
         }
+
+        if item.summary is not None:
+            json_item["summary"] = item.summary
 
         if item.updated is not None:
             json_item["date_modified"] = item.updated.astimezone().isoformat()
@@ -212,7 +214,8 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
                 item.content
             )
 
-            ElementTree.SubElement(entry, "summary").text = item.summary
+            if item.summary is not None:
+                ElementTree.SubElement(entry, "summary").text = item.summary
 
             entries.append(entry)
 

@@ -96,10 +96,12 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
                     "title": item["title"],
                     "author": item["authors"][0]["name"],
                     "content": item["content_html"],
-                    "summary": item["summary"],
                     "category": category,
                     "published": item["date_published"],
                 }
+
+                if "summary" in item:
+                    item_dict["summary"] = item["summary"]
 
                 if "date_modified" in item:
                     item_dict["updated"] = item["date_modified"]
