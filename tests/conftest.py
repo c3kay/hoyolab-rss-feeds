@@ -165,6 +165,7 @@ def feed_item() -> models.FeedItem:
         title="Test Article",
         author="John Doe",
         content="<p>Hello World!</p>",
+        summary="Hello!",
         category=models.FeedItemCategory.INFO,
         published=datetime(2022, 10, 3, 16).astimezone(),
         updated=datetime(2022, 10, 3, 18).astimezone(),
@@ -190,6 +191,7 @@ def json_feed_items(feed_item_list: List[models.FeedItem]) -> Dict[str, Any]:
                 "authors": [{"name": feed_item.author}],
                 "tags": [feed_item.category.name.title()],
                 "content_html": feed_item.content,
+                "summary": feed_item.summary,
                 "date_published": feed_item.published.astimezone().isoformat(),
                 "date_modified": (
                     feed_item.updated.astimezone().isoformat()
@@ -218,6 +220,7 @@ def atom_feed_entries(feed_item_list: List[models.FeedItem]) -> ElementTree.Elem
 
         ElementTree.SubElement(entry, "title").text = feed_item.title
         ElementTree.SubElement(entry, "content").text = feed_item.content
+        ElementTree.SubElement(entry, "summary").text = feed_item.summary
         ElementTree.SubElement(
             entry, "category", {"term": feed_item.category.name.title()}
         )
@@ -314,6 +317,9 @@ def validate_hoyolab_post(post: Dict[str, Any], is_full_post: bool) -> None:
 
         assert type(post["post"]["content"]) is str
         assert len(post["post"]["content"]) > 0
+
+        assert type(post["post"]["desc"]) is str
+        assert len(post["post"]["desc"]) > 0
 
         assert type(post["post"]["structured_content"]) is str
         assert len(post["post"]["structured_content"]) > 0

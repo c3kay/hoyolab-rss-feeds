@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/hoyolab-rss-feeds)](https://pypi.org/project/hoyolab-rss-feeds/)
 [![Python Version](https://img.shields.io/pypi/pyversions/hoyolab-rss-feeds)](https://pypi.org/project/hoyolab-rss-feeds/)
-[![Tests Status](https://img.shields.io/github/actions/workflow/status/c3kay/hoyolab-rss-feeds/test.yaml?branch=master)](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/test.yaml)
+[![Tests Status](https://img.shields.io/github/actions/workflow/status/c3kay/hoyolab-rss-feeds/build.yaml)](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/build.yaml)
 [![Codecov](https://img.shields.io/codecov/c/gh/c3kay/hoyolab-rss-feeds/master)](https://app.codecov.io/gh/c3kay/hoyolab-rss-feeds)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)

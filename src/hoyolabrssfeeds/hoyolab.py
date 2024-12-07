@@ -205,6 +205,7 @@ class HoyolabNews:
             "title": post["post"]["subject"],
             "author": post["user"]["nickname"],
             "content": post["post"]["content"],
+            "summary": post["post"]["desc"],
             "category": post["post"]["official_type"],
             "published": post["post"]["created_at"],
         }

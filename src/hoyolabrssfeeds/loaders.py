@@ -81,40 +81,39 @@ class JSONFeedFileLoader(AbstractFeedFileLoader):
     async def get_feed_items(self) -> List[FeedItem]:
         """Returns feed items of JSON-Feed if feed exists."""
 
-        if self.config.path.exists():
-            feed_items = []
-            feed = await self._load_from_file()
-
-            try:
-                for item in feed["items"]:
-                    category = FeedItemCategory.from_str(item["tags"][0])
-
-                    item_dict = {
-                        "id": item["id"],
-                        "title": item["title"],
-                        "author": item["authors"][0]["name"],
-                        "content": item["content_html"],
-                        "category": category,
-                        "published": item["date_published"],
-                    }
-
-                    if "date_modified" in item:
-                        item_dict["updated"] = item["date_modified"]
-
-                    if "image" in item:
-                        item_dict["image"] = item["image"]
-
-                    feed_items.append(item_dict)
-            except KeyError as err:
-                raise FeedFormatError(
-                    "Could not find required key in JSON feed!"
-                ) from err
-            except ValueError as err:
-                raise FeedFormatError("Could not load JSON feed items!") from err
-
-            return pydantic.parse_obj_as(List[FeedItem], feed_items)
-        else:
+        if not self.config.path.exists():
             return []
+
+        feed_items = []
+        feed = await self._load_from_file()
+
+        try:
+            for item in feed["items"]:
+                category = FeedItemCategory.from_str(item["tags"][0])
+
+                item_dict = {
+                    "id": item["id"],
+                    "title": item["title"],
+                    "author": item["authors"][0]["name"],
+                    "content": item["content_html"],
+                    "summary": item["summary"],
+                    "category": category,
+                    "published": item["date_published"],
+                }
+
+                if "date_modified" in item:
+                    item_dict["updated"] = item["date_modified"]
+
+                if "image" in item:
+                    item_dict["image"] = item["image"]
+
+                feed_items.append(item_dict)
+        except KeyError as err:
+            raise FeedFormatError("Could not find required key in JSON feed!") from err
+        except ValueError as err:
+            raise FeedFormatError("Could not load JSON feed items!") from err
+
+        return pydantic.parse_obj_as(List[FeedItem], feed_items)
 
     async def _load_from_file(self) -> Dict[str, Any]:
         """Load JSON-Feed from file."""
@@ -140,56 +139,55 @@ class AtomFeedFileLoader(AbstractFeedFileLoader):
     async def get_feed_items(self) -> List[FeedItem]:
         """Returns feed items of Atom feed if feed exists."""
 
-        if self.config.path.exists():
-            feed_items = []
-            root = await self._load_from_file()
-
-            for entry in root.findall("entry"):
-                id_str = entry.findtext("id")
-                item_id = id_str.rpartition(":")[2] if id_str is not None else None
-
-                category_node = entry.find("category")
-                try:
-                    category = (
-                        FeedItemCategory.from_str(category_node.get("term", default=""))
-                        if category_node is not None
-                        else None
-                    )
-                except ValueError as err:
-                    raise FeedFormatError("Could not load Atom feed entries!") from err
-
-                published_str = entry.findtext("published")
-                published = (
-                    datetime.fromisoformat(published_str)
-                    if published_str is not None
-                    else None
-                )
-
-                updated_str = entry.findtext("updated")
-                updated = (
-                    datetime.fromisoformat(updated_str)
-                    if updated_str is not None
-                    else None
-                )
-
-                item_dict = {
-                    "id": item_id,
-                    "title": entry.findtext("title"),
-                    "author": entry.findtext("author/name"),
-                    "content": entry.findtext("content"),
-                    "category": category,
-                    "published": published,
-                    "updated": updated,
-                }
-
-                feed_items.append(item_dict)
-
-            try:
-                return pydantic.parse_obj_as(List[FeedItem], feed_items)
-            except pydantic.ValidationError as err:
-                raise FeedFormatError("Could not load Atom feed entries!") from err
-        else:
+        if not self.config.path.exists():
             return []
+
+        feed_items = []
+        root = await self._load_from_file()
+
+        for entry in root.findall("entry"):
+            id_str = entry.findtext("id")
+            item_id = id_str.rpartition(":")[2] if id_str is not None else None
+
+            category_node = entry.find("category")
+            try:
+                category = (
+                    FeedItemCategory.from_str(category_node.get("term", default=""))
+                    if category_node is not None
+                    else None
+                )
+            except ValueError as err:
+                raise FeedFormatError("Could not load Atom feed entries!") from err
+
+            published_str = entry.findtext("published")
+            published = (
+                datetime.fromisoformat(published_str)
+                if published_str is not None
+                else None
+            )
+
+            updated_str = entry.findtext("updated")
+            updated = (
+                datetime.fromisoformat(updated_str) if updated_str is not None else None
+            )
+
+            item_dict = {
+                "id": item_id,
+                "title": entry.findtext("title"),
+                "author": entry.findtext("author/name"),
+                "content": entry.findtext("content"),
+                "summary": entry.findtext("summary"),
+                "category": category,
+                "published": published,
+                "updated": updated,
+            }
+
+            feed_items.append(item_dict)
+
+        try:
+            return pydantic.parse_obj_as(List[FeedItem], feed_items)
+        except pydantic.ValidationError as err:
+            raise FeedFormatError("Could not load Atom feed entries!") from err
 
     async def _load_from_file(self) -> ElementTree.Element:
         """Load Atom feed from file."""

@@ -95,6 +95,7 @@ class JSONFeedFileWriter(AbstractFeedFileWriter):
             "authors": [{"name": item.author}],
             "tags": [item.category.name.title()],
             "content_html": item.content,
+            "summary": item.summary,
             "date_published": item.published.astimezone().isoformat(),
         }
 
@@ -210,6 +211,8 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
             ElementTree.SubElement(entry, "content", {"type": "html"}).text = (
                 item.content
             )
+
+            ElementTree.SubElement(entry, "summary").text = item.summary
 
             entries.append(entry)
 

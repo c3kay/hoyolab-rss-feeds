@@ -144,6 +144,7 @@ async def test_get_feed_item(
             "post_id": str(feed_item.id),
             "subject": feed_item.title,
             "content": feed_item.content,
+            "desc": feed_item.summary,
             "official_type": feed_item.category.value,
             "created_at": int(feed_item.published.timestamp()),
         },
