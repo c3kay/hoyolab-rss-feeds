@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools == 75.6.0", "setuptools_scm[toml] == 8.1.0"]
+requires = ["setuptools ~= 80.7.1", "setuptools_scm[toml] ~= 8.3.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,7 @@ authors = [{name = "c3kay"}]
 description = "RSS feed generator for official game news from Hoyolab."
 readme = "README.md"
 license = {text = "MIT License"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = [
     "hoyolab",
     "rss",
@@ -22,10 +22,10 @@ keywords = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
@@ -34,22 +34,22 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary"
 ]
 dependencies = [
-    "aiohttp == 3.11.10",
-    "aiofiles == 24.1.0",
-    "pydantic >= 1.10.0, < 2",
-    'tomli == 2.2.1 ; python_version < "3.11"'
+    "aiohttp ~= 3.11.18",
+    "aiofiles ~= 24.1.0",
+    "pydantic ~= 1.10.0, < 2",
+    'tomli ~= 2.2.1 ; python_version < "3.11"'
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "tox == 4.23.2",
-    "pytest == 8.3.4",
-    "pytest-asyncio == 0.24.0",
-    "pytest-cov == 6.0.0",
-    "pytest-mock == 3.14.0",
-    "atoma == 0.0.17",
-    "langdetect == 1.0.9"
+    "tox ~= 4.26.0",
+    "pytest ~= 8.3.5",
+    "pytest-asyncio ~= 0.24.0",
+    "pytest-cov ~= 6.1.1",
+    "pytest-mock ~= 3.14.0",
+    "atoma ~= 0.0.17",
+    "langdetect ~= 1.0.9"
 ]
 
 [project.urls]

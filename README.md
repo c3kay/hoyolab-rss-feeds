@@ -16,7 +16,7 @@ There are some [feeds](https://c3kay.de/hoyolab-rss-feeds) already hosted by mys
 
 ## Installation
 
-You need at least Python 3.8 and the package manager Pip installed. You can then
+You need at least Python 3.10 and the package manager Pip installed. You can then
 install this package from PyPI with:
 
 ```shell
