@@ -1,5 +1,4 @@
-## Changes
+## Fixes
 
-- Updated dependencies
-- Added support for python 3.13
-- Dropped support for python 3.9
+- Fixed pydantic validation error for post description field
+- Fixed python versions in GitHub CI
