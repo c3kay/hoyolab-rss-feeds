@@ -209,7 +209,7 @@ class HoyolabNews:
             "published": post["post"]["created_at"],
         }
 
-        if "desc" in post["post"] and len(post["post"]["desc"]) > 0:
+        if "desc" in post["post"] and len(str(post["post"]["desc"]).strip()) > 0:
             item["summary"] = post["post"]["desc"]
 
         if post["last_modify_time"] > 0:
