@@ -132,13 +132,14 @@ logger = logging.getLogger("hoyolabrssfeeds")
 
 #### Games
 
-| Game              | Section    |
-|-------------------|------------|
-| Genshin Impact    | `genshin`  |
-| Honkai Impact 3rd | `honkai`   |
-| Tears of Themis   | `themis`   |
-| Honkai: Starrail  | `starrail` |
-| Zenless Zone Zero | `zenless`  |
+| Game                | Section    |
+|---------------------|------------|
+| Genshin Impact      | `genshin`  |
+| Honkai Impact 3rd   | `honkai`   |
+| Tears of Themis     | `themis`   |
+| Honkai: Starrail    | `starrail` |
+| Zenless Zone Zero   | `zenless`  |
+| Honkai: Nexus Anima | `nexus`    |
 
 #### Languages
 

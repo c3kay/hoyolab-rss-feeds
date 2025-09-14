@@ -270,6 +270,7 @@ def get_post_id(game: models.Game) -> int:
         models.Game.THEMIS: 4283335,
         models.Game.STARRAIL: 3746616,
         models.Game.ZENLESS: 4729212,
+        models.Game.NEXUS: 40785878,
     }
 
     return post_ids[game]

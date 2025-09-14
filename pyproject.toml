@@ -66,6 +66,7 @@ version_scheme = "python-simplified-semver"
 
 [tool.pytest.ini_options]
 addopts = "-vv --cov --cov-append --cov-report=xml --cov-report=term-missing"
+asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = ["hoyolabapi: marker for hoyolab api tests"]
