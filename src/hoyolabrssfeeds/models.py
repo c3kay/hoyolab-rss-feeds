@@ -39,6 +39,7 @@ class Game(IntEnum):
     THEMIS = 4
     STARRAIL = 6
     ZENLESS = 8
+    NEXUS = 9
 
     @classmethod
     def from_str(cls: Type[_G], game_str: str) -> _G:

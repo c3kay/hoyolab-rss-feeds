@@ -1,4 +1,3 @@
-## Fixes
+##  Changes
 
-- Fixed pydantic validation error for post description field
-- Fixed python versions in GitHub CI
+- Added new Game `Honkai: Nexus Anima`
