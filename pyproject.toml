@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools ~= 80.7.1", "setuptools_scm[toml] ~= 8.3.1"]
+requires = ["setuptools >= 80", "setuptools-scm >= 9"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -43,11 +43,11 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "tox ~= 4.26.0",
-    "pytest ~= 8.3.5",
-    "pytest-asyncio ~= 0.24.0",
-    "pytest-cov ~= 6.1.1",
-    "pytest-mock ~= 3.14.0",
+    "tox ~= 4.32.0",
+    "pytest ~= 8.4.2",
+    "pytest-asyncio ~= 1.2.0",
+    "pytest-cov ~= 7.0.0",
+    "pytest-mock ~= 3.15.1",
     "atoma ~= 0.0.17",
     "langdetect ~= 1.0.9"
 ]
