@@ -79,6 +79,10 @@ class HoyolabNews:
                 )
             )
 
+        # image gallery
+        if "view_type" in post["post"] and post["post"]["view_type"] == 2:
+            post["post"]["content"] = self._parse_gallery_post(post["post"]["content"])
+
         # remove empty leading paragraphs
         if post["post"]["content"].startswith(
             ("<p></p>", "<p>&nbsp;</p>", "<p><br></p>")
@@ -127,8 +131,31 @@ class HoyolabNews:
                 html_content.append('<img src="{}">'.format(node["insert"]["image"]))
             elif "video" in node["insert"]:
                 html_content.append(
-                    '<iframe src="{}"></iframe>'.format(node["insert"]["video"])
+                    '<iframe src="{}" border="0" frameborder="0" framespacing="0" scrolling="no" '
+                    'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true">'
+                    "</iframe>".format(node["insert"]["video"])
                 )
+
+        return "".join(html_content)
+
+    @staticmethod
+    def _parse_gallery_post(content: str) -> str:
+        """Parse the Hoyolab gallery post and return the constructed HTML."""
+
+        content = re.sub(r"(\\)?\\n", "<br>", content)
+        html_content = []
+
+        try:
+            json_content: Dict[str, Any] = json.loads(content)
+        except json.JSONDecodeError as err:
+            raise HoyolabApiError("Could not decode gallery content to JSON!") from err
+
+        if "describe" in json_content:
+            html_content.append("<p>{}</p>".format(json_content["describe"]))
+
+        if "imgs" in json_content and type(json_content["imgs"]) is list:
+            for img in json_content["imgs"]:
+                html_content.append('<p><img src="{}"></p>'.format(img))
 
         return "".join(html_content)
 

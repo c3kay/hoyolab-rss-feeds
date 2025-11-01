@@ -224,7 +224,9 @@ def test_structured_content_parser() -> None:
         <p><br></p>
         <p><a href="https://example.com">Hello Link!</a></p>
         <img src="https://example.com/image.jpg">
-        <iframe src="https://example.com/video.mp4"></iframe>
+        <iframe src="https://example.com/video.mp4" border="0" frameborder="0" framespacing="0" scrolling="no"
+         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+         allowfullscreen="true"></iframe>
     """.replace(
         "    ", ""
     ).replace(
@@ -256,6 +258,21 @@ def test_video_post() -> None:
         '<video src="https://example.com/video.mp4" poster="https://example.com/cover.jpg" controls playsinline>Watch '
         "the video here: https://example.com/video.mp4</video><p>Hello world!</p>"
     )
+
+    assert transformed_post["post"]["content"] == expected
+
+
+def test_image_gallery_post() -> None:
+    post = {
+        "post": {
+            "content": '{"describe": "Hello\\nWorld!", "imgs": ["https://example.com/image.jpg"]}',
+            "view_type": 2,
+        },
+    }
+
+    api = hoyolab.HoyolabNews(models.Game.GENSHIN)
+    transformed_post = api._transform_post(post)
+    expected = '<p>Hello<br>World!</p><p><img src="https://example.com/image.jpg"></p>'
 
     assert transformed_post["post"]["content"] == expected
 
