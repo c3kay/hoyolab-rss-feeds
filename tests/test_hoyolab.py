@@ -276,6 +276,16 @@ def test_image_gallery_post() -> None:
 
     assert transformed_post["post"]["content"] == expected
 
+    invalid_post = {
+        "post": {
+            "content": 'Hello World!',
+            "view_type": 2,
+        },
+    }
+
+    with pytest.raises(errors.HoyolabApiError):
+        api._transform_post(invalid_post)
+
 
 # ---- HELPER FUNCTIONS ----
 
