@@ -278,7 +278,7 @@ def test_image_gallery_post() -> None:
 
     invalid_post = {
         "post": {
-            "content": 'Hello World!',
+            "content": "Hello World!",
             "view_type": 2,
         },
     }
