@@ -11,9 +11,6 @@ being worked on! If the bug is new, please open an issue and describe the proble
 as detailed as possible. Console output, the config file or the feed files can also be 
 very helpful for debugging. So please attach them if needed!
 
-You can use the discussion page to ask questions about the project, but please also 
-check if they have already been answered before!
-
 ## Developing
 
 ### Getting Started
@@ -33,10 +30,10 @@ run the test suite simply with `tox` or `python -m tox`. If you just want to qui
 check the core tests for a single python version, you can run:
 
 ```shell
-tox -e py38 -- -m "not hoyolabapi"
+tox -e py310 -- -m "not hoyolabapi"
 ```
 
-This will only run the Python 3.8 environment and will instruct pytest to exclude the
+This will only run the Python 3.10 environment and will instruct pytest to exclude the
 Hoyolab API tests (which are kind of slow due to the amount of requests being made).
 
 ### Tools
