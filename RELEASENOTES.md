@@ -1,3 +1,4 @@
-##  Changes
+##  Fixes
 
-- Added new Game `Honkai: Nexus Anima`
+- Fixed image gallery posts that have been displayed as JSON
+- Updated dependencies
