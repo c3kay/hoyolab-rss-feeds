@@ -18,7 +18,6 @@ from hoyolabrssfeeds import models
 from hoyolabrssfeeds.loaders import AbstractFeedFileLoader
 from hoyolabrssfeeds.writers import AbstractFeedFileWriter
 
-
 # ---- GENERAL FIXTURES ----
 
 

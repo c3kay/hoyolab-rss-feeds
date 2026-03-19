@@ -15,7 +15,6 @@ from hoyolabrssfeeds import loaders
 from hoyolabrssfeeds import models
 from hoyolabrssfeeds import writers
 
-
 # ---- FACTORY TESTS ----
 
 

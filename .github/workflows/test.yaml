@@ -22,7 +22,7 @@ jobs:
       - name: Run flake8 via tox
         run: python -m tox -e flake
       - name: Run black via tox
-        run: python -m tox -e black -- --check
+        run: python -m tox -e black -- --check --fast
       - name: Run mypy via tox
         run: python -m tox -e type
 
