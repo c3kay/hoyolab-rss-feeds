@@ -140,6 +140,7 @@ logger = logging.getLogger("hoyolabrssfeeds")
 | Honkai: Starrail    | `starrail` |
 | Zenless Zone Zero   | `zenless`  |
 | Honkai: Nexus Anima | `nexus`    |
+| Petit Planet        | `planet`   |
 
 #### Languages
 
