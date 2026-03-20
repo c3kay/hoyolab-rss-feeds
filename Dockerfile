@@ -1,8 +1,9 @@
 FROM python:3.13-slim
 LABEL authors="c3kay"
 
-ARG version=0.0.1
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_HOYOLAB_RSS_FEEDS=$version
+# basically ignore version of python package
+# version will be set with docker tag and label
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_HOYOLAB_RSS_FEEDS=1.0.0
 
 RUN mkdir /app /data
 WORKDIR /app
