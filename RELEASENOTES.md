@@ -1,4 +1,5 @@
-##  Fixes
+##  Changes
 
-- Fixed image gallery posts that have been displayed as JSON
+- Added new Game `Petit Planet`
+- Added Docker image
 - Updated dependencies

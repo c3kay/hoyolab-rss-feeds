@@ -227,11 +227,7 @@ def test_structured_content_parser() -> None:
         <iframe src="https://example.com/video.mp4" border="0" frameborder="0" framespacing="0" scrolling="no"
          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
          allowfullscreen="true"></iframe>
-    """.replace(
-        "    ", ""
-    ).replace(
-        "\n", ""
-    )
+    """.replace("    ", "").replace("\n", "")
 
     assert hoyolab.HoyolabNews._parse_structured_content(raw_sc) == expected_html
 
@@ -298,6 +294,7 @@ def get_post_id(game: models.Game) -> int:
         models.Game.STARRAIL: 3746616,
         models.Game.ZENLESS: 4729212,
         models.Game.NEXUS: 40785878,
+        models.Game.PLANET: 42327702,
     }
 
     return post_ids[game]

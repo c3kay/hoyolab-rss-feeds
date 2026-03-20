@@ -11,7 +11,6 @@ from hoyolabrssfeeds import errors
 from hoyolabrssfeeds import models
 from hoyolabrssfeeds import writers
 
-
 # ---- FACTORY TESTS ----
 
 
