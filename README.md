@@ -12,28 +12,25 @@ on the official [Hoyolab](https://www.hoyolab.com) forum posts. Available feed f
 are [Atom](https://datatracker.ietf.org/doc/html/rfc4287) and [JSON Feed](https://jsonfeed.org).
 This application is supposed to run periodically by a cronjob for example.
 
-There are some [feeds](https://c3kay.de/hoyolab-rss-feeds) already hosted by myself!
+There are [feeds of some games](https://c3kay.de/hoyolab-rss-feeds) already hosted by myself!
 
-## Installation
+## Installation & Usage
 
-You need at least Python 3.10 and the package manager Pip installed. You can then
-install this package from PyPI with:
+### Python Module
+
+You can install the package from PyPI with:
 
 ```shell
 pip install hoyolab-rss-feeds
 ```
 
-## Usage
-
-### CLI
-
-You can run the application like this:
+... and run the application like this:
 
 ```shell
 hoyolab-rss-feeds
 ```
 
-or as module:
+... or explicitly as module:
 
 ```shell
 python -m hoyolabrssfeeds
@@ -48,9 +45,7 @@ You can specify a path for the config file with a parameter:
 hoyolab-rss-feeds -c path/to/config.toml
 ```
 
-### Module
-
-It is also possible to generate the feeds via code:
+It is also possible to generate the feeds directly in your Python code:
 
 ```python
 from pathlib import Path
@@ -72,6 +67,25 @@ async def generate_feeds():
 
 [Here](https://gist.github.com/c3kay/2cd9833ef1c527e210aebf7a866336ed)
 you can find an example on how to create a feed without using the TOML config file.
+
+### Docker
+
+The application is also available as Docker image and can be run like this:
+
+```shell
+docker run \
+  -v "/path/to/config.toml:/app/config.toml" \
+  -v "/path/to/data:/data" \
+  ghcr.io/c3kay/hoyolab-rss-feeds
+```
+
+The config file should be mounted to the default path `/app/config.toml`.
+The `/data` directory should be used as the target directory for the generated
+feeds and also need to be configured like so in the config file
+(see option `feed.<format>.path` below).
+
+Please note that you still need some kind of scheduler like cron or Kubernetes
+to run the image in fixed intervals to refresh the feeds!
 
 ## Configuration
 
