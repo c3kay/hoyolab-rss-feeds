@@ -94,6 +94,12 @@ class HoyolabNews:
             "hoyolab-upload-private", "upload-os-bbs"
         )
 
+        # youtube error 153
+        if "<iframe " in post["post"]["content"]:
+            post["post"]["content"] = post["post"]["content"].replace(
+                "<iframe ", '<iframe referrerpolicy="strict-origin-when-cross-origin" '
+            )
+
         return post
 
     @staticmethod
@@ -110,19 +116,38 @@ class HoyolabNews:
                 "Could not decode structured content to JSON!"
             ) from err
 
-        for node in json_content:
-            if type(node["insert"]) is str:
-                if "attributes" in node and "link" in node["attributes"]:
-                    text = '<a href="{}">{}</a>'.format(
-                        node["attributes"]["link"], node["insert"]
-                    )
-                else:
-                    text = node["insert"]
+        for i, node in enumerate(json_content):
+            next = json_content[i + 1] if i + 1 < len(json_content) else None
 
-                if "attributes" in node and "bold" in node["attributes"]:
-                    text = "<p><strong>{}</strong></p>".format(text)
-                elif "attributes" in node and "italic" in node["attributes"]:
-                    text = "<p><em>{}</em></p>".format(text)
+            if type(node["insert"]) is str:
+                text = node["insert"]
+
+                # merge attributes of next node into current if next is meta node
+                if (
+                    next is not None
+                    and next["insert"] == "<br>"
+                    and "attributes" in next
+                ):
+                    node["attributes"] = node.get("attributes", {})
+                    node["attributes"].update(next["attributes"])
+
+                if "attributes" in node:
+                    # skip current meta/attribute node
+                    if node["insert"] == "<br>":
+                        continue
+
+                    if "link" in node["attributes"]:
+                        text = '<a href="{}">{}</a>'.format(
+                            node["attributes"]["link"], text
+                        )
+                    if "bold" in node["attributes"]:
+                        text = "<strong>{}</strong>".format(text)
+                    if "italic" in node["attributes"]:
+                        text = "<em>{}</em>".format(text)
+
+                if "attributes" in node and "header" in node["attributes"]:
+                    hn = node["attributes"]["header"]
+                    text = f"<h{hn}>{text}</h{hn}>"
                 else:
                     text = "<p>{}</p>".format(text)
 
@@ -132,9 +157,11 @@ class HoyolabNews:
             elif "video" in node["insert"]:
                 html_content.append(
                     '<iframe src="{}" border="0" frameborder="0" framespacing="0" scrolling="no" '
-                    'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true">'
-                    "</iframe>".format(node["insert"]["video"])
+                    'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" '
+                    'allowfullscreen="true"></iframe>'.format(node["insert"]["video"])
                 )
+            elif "divider" in node["insert"]:
+                html_content.append("<hr>")
 
         return "".join(html_content)
 
