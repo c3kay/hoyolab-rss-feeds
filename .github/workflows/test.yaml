@@ -18,12 +18,10 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "tox >= 3.26.0"
-      - name: Run flake8 via tox
-        run: python -m tox -e flake
-      - name: Run black via tox
-        run: python -m tox -e black -- --check --fast
-      - name: Run mypy via tox
+          python -m pip install "tox ~= 4.50.1"
+      - name: Linting
+        run: python -m tox -e lint
+      - name: Type checking
         run: python -m tox -e type
 
   test:
@@ -42,8 +40,8 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "tox-gh-actions >= 2.10.0"
-          python -m pip install "tox >= 3.26.0"
+          python -m pip install "tox ~= 4.50.1"
+          python -m pip install "tox-gh ~= 1.7.1"
       - name: Run tests via tox
         run: python -m tox
       - name: Upload to CodeCov
