@@ -49,12 +49,12 @@ dev = [
     {include-group = "lint"}
 ]
 test = [
-    "tox ~= 4.55.1",
+    "tox ~= 4.56.1",
     "pytest ~= 9.1.1",
     "pytest-asyncio ~= 1.4.0",
     "pytest-cov ~= 7.1.0",
     "pytest-mock ~= 3.15.1",
-    "coverage[toml] ~= 7.14.2",
+    "coverage[toml] ~= 7.14.3",
     "atoma ~= 0.0.17",
     "langdetect ~= 1.0.9"
 ]
@@ -64,7 +64,7 @@ type = [
     "pytest-mock ~= 3.15.1"
 ]
 lint = [
-    "ruff ~= 0.15.18"
+    "ruff ~= 0.15.20"
 ]
 
 [project.urls]
@@ -134,15 +134,15 @@ env_list = [
 [tool.tox.env_run_base]
 description = "Testing ({base_python})"
 dependency_groups = ["test"]
-commands = [["pytest"]]
+commands = [["pytest", "{posargs}"]]
 
 [tool.tox.env.type]
 description = "Type checking via mypy"
 dependency_groups = ["type"]
-commands = [["mypy", "--install-types", "--non-interactive"]]
+commands = [["mypy", "--install-types", "--non-interactive", "{posargs}"]]
 
 [tool.tox.env.lint]
 description = "Lint via ruff"
 skip_install = true
 dependency_groups = ["lint"]
-commands = [["ruff", "check"]]
+commands = [["ruff", "{posargs:check}"]]
