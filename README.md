@@ -4,48 +4,55 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/hoyolab-rss-feeds)](https://pypi.org/project/hoyolab-rss-feeds/)
 [![Tests Status](https://img.shields.io/github/actions/workflow/status/c3kay/hoyolab-rss-feeds/build.yaml)](https://github.com/c3kay/hoyolab-rss-feeds/actions/workflows/build.yaml)
 [![Codecov](https://codecov.io/gh/c3kay/hoyolab-rss-feeds/graph/badge.svg?token=Q8YYARNJ9P)](https://codecov.io/gh/c3kay/hoyolab-rss-feeds)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-Generate RSS news feeds for Hoyoverse games like Genshin Impact or Honkai Starrail based
-on the official [Hoyolab](https://www.hoyolab.com) forum posts. Available feed formats
-are [Atom](https://datatracker.ietf.org/doc/html/rfc4287) and [JSON Feed](https://jsonfeed.org).
+Generate RSS news feeds for Hoyoverse games like *Genshin Impact*, *Honkai Starrail*
+or *Zenless Zone Zero* based on the official [Hoyolab](https://www.hoyolab.com) forum posts.
+Available feed formats are [Atom](https://datatracker.ietf.org/doc/html/rfc4287)
+and [JSON Feed](https://jsonfeed.org).
 This application is supposed to run periodically by a cronjob for example.
 
-There are [feeds of some games](https://c3kay.de/hoyolab-rss-feeds) already hosted by myself!
+## Installation
 
-## Installation & Usage
-
-### Python Module
-
-You can install the package from PyPI with:
+You can install the application from PyPI with:
 
 ```shell
-pip install hoyolab-rss-feeds
+python3 -m pip install hoyolab-rss-feeds
 ```
 
-... and run the application like this:
+... or pull as Docker image:
 
 ```shell
-hoyolab-rss-feeds
+docker pull ghcr.io/c3kay/hoyolab-rss-feeds
+```
+
+## Usage
+
+### CLI
+
+You can run the application like this:
+
+```shell
+hoyolabrssfeeds
 ```
 
 ... or explicitly as module:
 
 ```shell
-python -m hoyolabrssfeeds
+python3 -m hoyolabrssfeeds
 ```
 
-If no configuration can be found, the application will create a default config
-in your current directory (`./hoyolab-rss-feeds.toml`) and will exit afterward.
-
-You can specify a path for the config file with a parameter:
+You can specify a custom path to the config file as parameter:
 
 ```shell
-hoyolab-rss-feeds -c path/to/config.toml
+hoyolabrssfeeds -c path/to/config.toml
 ```
 
-It is also possible to generate the feeds directly in your Python code:
+If no configuration can be found, a default config will be created
+in your current directory (`./hoyolab-rss-feeds.toml`).
+
+### Module
+
+You can use the application as Python module/library and customize feed generation:
 
 ```python
 from pathlib import Path
@@ -54,19 +61,19 @@ from hoyolabrssfeeds import FeedConfigLoader, GameFeed, GameFeedCollection, Game
 async def generate_feeds():
     loader = FeedConfigLoader(Path("path/to/config.toml"))
     
-    # all games in config
+    # option 1: all games found in config
     all_configs = await loader.get_all_feed_configs()
     feed_collection = GameFeedCollection.from_configs(all_configs)
     await feed_collection.create_feeds()
     
-    # only a single game
+    # option 2: only a specific game from config
     genshin_config = await loader.get_feed_config(Game.GENSHIN)
     genshin_feed = GameFeed.from_config(genshin_config)
     await genshin_feed.create_feed()
 ```
 
 [Here](https://gist.github.com/c3kay/2cd9833ef1c527e210aebf7a866336ed)
-you can find an example on how to create a feed without using the TOML config file.
+you can find an example on how to create a feed without using the config file.
 
 ### Docker
 
@@ -84,12 +91,12 @@ The `/data` directory should be used as the target directory for the generated
 feeds and also need to be configured like so in the config file
 (see option `feed.<format>.path` below).
 
-Please note that you still need some kind of scheduler like cron or Kubernetes
-to run the image in fixed intervals to refresh the feeds!
+**Note:** You still need some kind of scheduler like cron or Kubernetes
+to run the image in a fixed interval to refresh the feeds!
 
 ## Configuration
 
-In the TOML config file you can define for which games you want to create a feed
+In the TOML config file you can define the games you want to create feeds for
 and in which format the feeds should be. Here is an example config:
 
 ```toml
@@ -133,7 +140,7 @@ format can be found in the [official documentation](https://toml.io/en/).
 Simple logs at level `INFO` are written to the terminal by default. If a file path is given
 via parameter (`-l /path/to/out.log`), the logs are written to this file.
 
-If the application is run via code, the logger must be 
+If the application is used as module, the logger must be 
 [configured](https://docs.python.org/3.11/howto/logging.html#configuring-logging) separately. 
 The application specific logger is available by:
 
@@ -150,9 +157,9 @@ logger = logging.getLogger("hoyolabrssfeeds")
 |---------------------|------------|
 | Genshin Impact      | `genshin`  |
 | Honkai Impact 3rd   | `honkai`   |
-| Tears of Themis     | `themis`   |
 | Honkai: Starrail    | `starrail` |
 | Zenless Zone Zero   | `zenless`  |
+| Tears of Themis     | `themis`   |
 | Honkai: Nexus Anima | `nexus`    |
 | Petit Planet        | `planet`   |
 
