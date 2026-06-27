@@ -7,7 +7,7 @@ name = "hoyolab-rss-feeds"
 authors = [{name = "c3kay"}]
 description = "RSS feed generator for official game news from Hoyolab."
 readme = "README.md"
-license = {text = "MIT License"}
+license = "MIT"
 requires-python = ">=3.10"
 keywords = [
     "hoyolab",
@@ -27,7 +27,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -48,8 +47,15 @@ dev = [
     {include-group = "type"},
     {include-group = "lint"}
 ]
+tox = [
+    "tox ~= 4.56.1"
+]
+ci = [
+    {include-group = "tox"},
+    "tox-gh ~= 1.7.1"
+]
 test = [
-    "tox ~= 4.56.1",
+    {include-group = "tox"},
     "pytest ~= 9.1.1",
     "pytest-asyncio ~= 1.4.0",
     "pytest-cov ~= 7.1.0",
