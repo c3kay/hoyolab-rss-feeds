@@ -199,12 +199,14 @@ def test_private_link_bug() -> None:
 def test_yt_iframe() -> None:
     post = {
         "post": {
-            "content": '<div><iframe width="1280" src="https://www.youtube.com/embed/aaBB0-0?attr=val1" height="720"></iframe></div>'
+            "content": '<iframe width="1280" src="https://www.youtube.com/embed/aaBB0-0?attr=val1" height="720"></iframe>'
         }
     }
 
     expected = {
-        "post": {"content": '<p><strong>YouTube: <a href="https://youtu.be/aaBB0-0">https://youtu.be/aaBB0-0</a></strong></p>'}
+        "post": {
+            "content": '<p><strong>YouTube: <a href="https://youtu.be/aaBB0-0">https://youtu.be/aaBB0-0</a></strong></p>'
+        }
     }
 
     api = hoyolab.HoyolabNews(models.Game.GENSHIN)
