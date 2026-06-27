@@ -7,7 +7,7 @@ LABEL description="RSS feed (JSON & Atom) generator for official game news from 
 ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_HOYOLAB_RSS_FEEDS=1.0.0
 
 RUN mkdir /app /data && \
-    echo '[genshin]\nfeed.json.path = "/data/genshin.json"' > /app/config.toml \
+    echo '[genshin]\nfeed.json.path = "/data/genshin.json"' > /app/config.toml
 
 WORKDIR /app
 VOLUME /data
