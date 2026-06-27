@@ -228,6 +228,7 @@ def test_content_html_bug() -> None:
 def test_structured_content_parser() -> None:
     raw_sc = """
         [{"insert":"Hello World!"},
+        {"insert":"\\n"},
         {"insert":"Hello bold World!","attributes":{"bold":true}},
         {"insert":"Hello italic World!","attributes":{"italic":true}},
         {"insert":"Hello colorful World!","attributes":{"color":"#aabbcc"}},
@@ -235,9 +236,10 @@ def test_structured_content_parser() -> None:
         {"insert":"\\n","attributes":{"header":3}},
         {"insert":"Hello Link!","attributes":{"link":"https://example.com"}},
         {"insert":{"divider":"line2"}},
-        {"insert":"\\n"},
+        {"insert":"\\n\\n"},
         {"insert":{"image":"https://example.com/image.jpg", "attributes":{"width":1280, "height":720}}},
         {"insert":{"video":"https://example.com/video.mp4"}},
+        {"insert":{"video":"https://www.youtube.com/embed/ccDD6-7"}},
         {"insert":{"video":"https://www.youtube.com/embed/aaBB4-2?attr=val1"}}]
     """
 
@@ -248,9 +250,10 @@ def test_structured_content_parser() -> None:
         <p><span color="#aabbcc">Hello colorful World!</span></p>
         <h3><strong>Hello bold Header!</strong></h3>
         <p><a href="https://example.com">Hello Link!</a></p>
-        <div><img src="https://hyl-static-res-prod.hoyolab.com/divider_config/PC/line2.png"></div>
+        <p><img src="https://hyl-static-res-prod.hoyolab.com/divider_config/PC/line2.png"></p>
         <div><img src="https://example.com/image.jpg" width="1280" height="720"></div>
-        <video src="https://example.com/video.mp4">Watch the video here: https://example.com/video.mp4</video>
+        <div><video src="https://example.com/video.mp4">Watch the video here: https://example.com/video.mp4</video></div>
+        <p><strong>YouTube: <a href="https://youtu.be/ccDD6-7">https://youtu.be/ccDD6-7</a></strong></p>
         <p><strong>YouTube: <a href="https://youtu.be/aaBB4-2">https://youtu.be/aaBB4-2</a></strong></p>
     """.replace("    ", "").replace("\n", "")
 

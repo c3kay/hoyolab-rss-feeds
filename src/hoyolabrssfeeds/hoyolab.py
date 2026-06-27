@@ -97,7 +97,7 @@ class HoyolabNews:
         # youtube error 153
         if "<iframe" in post["post"]["content"]:
             post["post"]["content"] = re.sub(
-                r'<iframe.+?src="https:\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9-_]+)\?.+?".*?><\/iframe>',
+                r'<iframe.+?src="https:\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9-_]+).+?".*?><\/iframe>',
                 r'<p><strong>YouTube: <a href="https://youtu.be/\1">https://youtu.be/\1</a></strong></p>',
                 post["post"]["content"],
             )
@@ -124,8 +124,8 @@ class HoyolabNews:
             if type(node["insert"]) is str:
                 text = node["insert"]
 
-                # skip spacer nodes
-                if node["insert"] == "<br>":
+                # skip spacer nodes - only line breaks
+                if re.fullmatch(re.compile(r"(<br>)+"), node["insert"]) is not None:
                     continue
 
                 # merge attributes of next spacer node into current
@@ -167,7 +167,7 @@ class HoyolabNews:
                     )
                 )
             elif "video" in node["insert"]:
-                pattern = re.compile(r".*youtube\.com\/embed\/([a-zA-Z0-9_-]+)\?.*")
+                pattern = re.compile(r".*youtube\.com\/embed\/([a-zA-Z0-9_-]+).*")
                 match = re.match(pattern, node["insert"]["video"])
                 if match is not None:
                     yt_code = match.group(1)
@@ -176,13 +176,13 @@ class HoyolabNews:
                     )
                 else:
                     html_content.append(
-                        f'<video src="{node["insert"]["video"]}">Watch the video here: {node["insert"]["video"]}</video>'
+                        f'<div><video src="{node["insert"]["video"]}">Watch the video here: {node["insert"]["video"]}</video></div>'
                     )
             elif "divider" in node["insert"]:
                 img_url = "https://hyl-static-res-prod.hoyolab.com/divider_config/PC/{}.png".format(
                     node["insert"]["divider"]
                 )
-                html_content.append('<div><img src="{}"></div>'.format(img_url))
+                html_content.append('<p><img src="{}"></p>'.format(img_url))
 
         return "".join(html_content)
 
