@@ -210,9 +210,9 @@ class AtomFeedFileWriter(AbstractFeedFileWriter):
             author = ElementTree.SubElement(entry, "author")
             ElementTree.SubElement(author, "name").text = item.author
 
-            ElementTree.SubElement(entry, "content", {"type": "html"}).text = (
-                item.content
-            )
+            ElementTree.SubElement(
+                entry, "content", {"type": "html"}
+            ).text = item.content
 
             if item.summary is not None:
                 ElementTree.SubElement(entry, "summary").text = item.summary

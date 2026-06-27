@@ -94,6 +94,14 @@ class HoyolabNews:
             "hoyolab-upload-private", "upload-os-bbs"
         )
 
+        # youtube error 153
+        if "<iframe" in post["post"]["content"]:
+            post["post"]["content"] = re.sub(
+                r'<iframe.+?src="https:\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9-_]+).+?".*?><\/iframe>',
+                r'<p><strong>YouTube: <a href="https://youtu.be/\1">https://youtu.be/\1</a></strong></p>',
+                post["post"]["content"],
+            )
+
         return post
 
     @staticmethod
@@ -110,31 +118,71 @@ class HoyolabNews:
                 "Could not decode structured content to JSON!"
             ) from err
 
-        for node in json_content:
-            if type(node["insert"]) is str:
-                if "attributes" in node and "link" in node["attributes"]:
-                    text = '<a href="{}">{}</a>'.format(
-                        node["attributes"]["link"], node["insert"]
-                    )
-                else:
-                    text = node["insert"]
+        for i, node in enumerate(json_content):
+            next = json_content[i + 1] if i + 1 < len(json_content) else None
 
-                if "attributes" in node and "bold" in node["attributes"]:
-                    text = "<p><strong>{}</strong></p>".format(text)
-                elif "attributes" in node and "italic" in node["attributes"]:
-                    text = "<p><em>{}</em></p>".format(text)
+            if type(node["insert"]) is str:
+                text = node["insert"]
+
+                # skip spacer nodes - only line breaks
+                if re.fullmatch(re.compile(r"(<br>)+"), node["insert"]) is not None:
+                    continue
+
+                # merge attributes of next spacer node into current
+                if (
+                    next is not None
+                    and next["insert"] == "<br>"
+                    and "attributes" in next
+                ):
+                    node["attributes"] = node.get("attributes", {})
+                    node["attributes"].update(next["attributes"])
+
+                if "attributes" in node:
+                    if "link" in node["attributes"]:
+                        text = '<a href="{}">{}</a>'.format(
+                            node["attributes"]["link"], text
+                        )
+                    if "bold" in node["attributes"]:
+                        text = "<strong>{}</strong>".format(text)
+                    if "italic" in node["attributes"]:
+                        text = "<em>{}</em>".format(text)
+                    if "color" in node["attributes"]:
+                        text = '<span color="{}">{}</span>'.format(
+                            node["attributes"]["color"], text
+                        )
+
+                if "attributes" in node and "header" in node["attributes"]:
+                    hn = node["attributes"]["header"]
+                    text = f"<h{hn}>{text}</h{hn}>"
                 else:
                     text = "<p>{}</p>".format(text)
 
                 html_content.append(text)
             elif "image" in node["insert"]:
-                html_content.append('<img src="{}">'.format(node["insert"]["image"]))
-            elif "video" in node["insert"]:
+                attributes = node["insert"].get("attributes", {})
+                attr_str = " ".join([f'{k}="{v}"' for k, v in attributes.items()])
                 html_content.append(
-                    '<iframe src="{}" border="0" frameborder="0" framespacing="0" scrolling="no" '
-                    'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true">'
-                    "</iframe>".format(node["insert"]["video"])
+                    '<div><img src="{}" {}></div>'.format(
+                        node["insert"]["image"], attr_str
+                    )
                 )
+            elif "video" in node["insert"]:
+                pattern = re.compile(r".*youtube\.com\/embed\/([a-zA-Z0-9_-]+).*")
+                match = re.match(pattern, node["insert"]["video"])
+                if match is not None:
+                    yt_code = match.group(1)
+                    html_content.append(
+                        f'<p><strong>YouTube: <a href="https://youtu.be/{yt_code}">https://youtu.be/{yt_code}</a></strong></p>'
+                    )
+                else:
+                    html_content.append(
+                        f'<div><video src="{node["insert"]["video"]}">Watch the video here: {node["insert"]["video"]}</video></div>'
+                    )
+            elif "divider" in node["insert"]:
+                img_url = "https://hyl-static-res-prod.hoyolab.com/divider_config/PC/{}.png".format(
+                    node["insert"]["divider"]
+                )
+                html_content.append('<p><img src="{}"></p>'.format(img_url))
 
         return "".join(html_content)
 
