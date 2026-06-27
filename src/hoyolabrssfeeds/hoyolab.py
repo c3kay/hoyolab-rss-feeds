@@ -172,7 +172,7 @@ class HoyolabNews:
                 if match is not None:
                     yt_code = match.group(1)
                     html_content.append(
-                        f"<p><strong>YouTube: <a href='https://youtu.be/{yt_code}'>https://youtu.be/{yt_code}</a></strong></p>"
+                        f'<p><strong>YouTube: <a href="https://youtu.be/{yt_code}">https://youtu.be/{yt_code}</a></strong></p>'
                     )
                 else:
                     html_content.append(
